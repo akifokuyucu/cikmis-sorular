@@ -1,0 +1,1585 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Soru Havuzu">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="logo-96.png" type="image/png">
+<link rel="apple-touch-icon" href="ikon-maskable-512.png">
+<title>Cerrahpaşa Soru Havuzu</title>
+<style>
+  /* Renkler ve şekiller Mezun Arama ile ortak (bkz. TASARIM.md §A). Doğru/yanlış renkleri bordodan ayrık tutulur. */
+  :root {
+    --bordo: #7c1714; --bordo-koyu: #4f0e0c; --bordo-yazi: #7c1714; --bordo-zemin: #f7ecea; --bordo-cizgi: #ead3cf;
+    --zemin: #f8f5f4; --kart: #ffffff; --yazi: #1d1a1a; --soluk: #625a58; --cizgi: #e8e0de; --kara: #efe6e3;
+    --vurgu: #fde68a; --vurgu-yazi: #7a5200; --sekme-zemin: #fde9dc;
+    --dogru: #2e7d4f; --dogru-zemin: #e8f4ec; --yanlis: #e0442b; --yanlis-zemin: #fdecea;
+    --golge: 0 1px 2px rgba(60, 20, 18, .06), 0 4px 14px rgba(60, 20, 18, .06);
+    --golge-buyuk: 0 2px 4px rgba(60, 20, 18, .06), 0 10px 24px rgba(60, 20, 18, .12);
+    --yaricap: 16px; --alt-bosluk: env(safe-area-inset-bottom, 0px);
+  }
+  /* Tema (Ayarlar): Otomatik telefonun ayarını izler; data-tema="acik" / "koyu" bunu geçersiz kılar */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="acik"]) {
+      --bordo-yazi: #f2a49d; --bordo-zemin: #3a1d1b; --bordo-cizgi: #5c2e2a;
+      --zemin: #121010; --kart: #1d1819; --yazi: #f3ecea; --soluk: #b3a8a5; --cizgi: #322a2a; --kara: #2a2223;
+      --vurgu: #4a3b12; --vurgu-yazi: #f6d77a; --sekme-zemin: #45271c;
+      --dogru: #6fcf97; --dogru-zemin: #16291e; --yanlis: #ff7a63; --yanlis-zemin: #3a1a15; --rozet-yazi: #1d1a1a;
+      --golge: none; --golge-buyuk: 0 8px 20px rgba(0, 0, 0, .35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-tema="koyu"] {
+      --bordo-yazi: #f2a49d; --bordo-zemin: #3a1d1b; --bordo-cizgi: #5c2e2a;
+      --zemin: #121010; --kart: #1d1819; --yazi: #f3ecea; --soluk: #b3a8a5; --cizgi: #322a2a; --kara: #2a2223;
+      --vurgu: #4a3b12; --vurgu-yazi: #f6d77a; --sekme-zemin: #45271c;
+      --dogru: #6fcf97; --dogru-zemin: #16291e; --yanlis: #ff7a63; --yanlis-zemin: #3a1a15; --rozet-yazi: #1d1a1a;
+      --golge: none; --golge-buyuk: 0 8px 20px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+  /* E-kitap görünümü: kitap sayfası tonunda sıcak zemin (TUSBuddy'deki "E-Kitap" içerik görünümü) */
+  :root[data-gorunum="ekitap"] {
+    --zemin: #f1e7d3; --kart: #fbf4e4; --cizgi: #e3d5b8; --kara: #ebdfc6; --yazi: #2e2618; --soluk: #6b5d47;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-gorunum="ekitap"]:not([data-tema="acik"]) {
+      --zemin: #1b1712; --kart: #262019; --cizgi: #3a3226; --kara: #302920; --yazi: #ede3cf; --soluk: #b5a88f;
+    }
+  }
+  :root[data-tema="koyu"][data-gorunum="ekitap"] {
+    --zemin: #1b1712; --kart: #262019; --cizgi: #3a3226; --kara: #302920; --yazi: #ede3cf; --soluk: #b5a88f;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--zemin); color: var(--yazi); padding-bottom: calc(76px + var(--alt-bosluk));
+         font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body.kilitli { overflow: hidden; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
+          stroke-linecap: round; stroke-linejoin: round; }
+  .ic { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+  /* Üst çubuk */
+  .ust { position: sticky; top: 0; z-index: 15; color: #fff;
+         background: linear-gradient(160deg, var(--bordo) 0%, var(--bordo-koyu) 100%);
+         padding-top: env(safe-area-inset-top); box-shadow: 0 2px 12px rgba(40, 6, 5, .25); }
+  .ust-ic { display: flex; align-items: center; gap: 8px; height: 64px; }
+  .geri { flex: none; width: 40px; height: 40px; margin-left: -6px; border: 0; border-radius: 50%;
+          background: rgba(255, 255, 255, .12); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .geri svg { width: 22px; height: 22px; stroke-width: 2.5; }
+  .geri:active { background: rgba(255, 255, 255, .25); }
+  .marka { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+  /* Logo: "Cerrahpaşa Tıp Fakültesi · Çıkmış Sorular Modülü" (kaynak: referans/logo-kaynak.jpg) */
+  .logo { flex: none; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 10px rgba(0, 0, 0, .35); }
+  .ust-dugme:last-child { margin-right: -6px; }
+  .ust-dugme b { font-size: 15px; letter-spacing: -.02em; }
+  .olcekler button { font-weight: 700; color: var(--yazi); padding: 6px 0; min-height: 44px; }
+  .ust-dugme { flex: none; width: 40px; height: 40px; border: 0; border-radius: 50%;
+               background: rgba(255, 255, 255, .12); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .ust-dugme svg { width: 22px; height: 22px; }
+  .ust-dugme:active { background: rgba(255, 255, 255, .25); }
+  .marka span { min-width: 0; }
+  .marka b { display: block; font-size: 18px; line-height: 1.2; letter-spacing: -.01em; }
+  .marka small { display: block; font-size: 12.5px; color: rgba(255, 255, 255, .82); white-space: nowrap;
+                 overflow: hidden; text-overflow: ellipsis; }
+
+  main { padding-top: 16px; padding-bottom: 16px; }
+  .kutu { background: var(--kart); border: 1px solid var(--cizgi); border-radius: var(--yaricap); padding: 16px;
+          box-shadow: var(--golge); margin-bottom: 12px; }
+  .liste-ogesi { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+  .liste-ogesi:active { transform: scale(.99); }
+  .liste-ogesi .alt { color: var(--soluk); font-size: 13px; }
+  .sayi-rozet { font-size: 13px; font-weight: 700; color: var(--bordo-yazi); background: var(--bordo-zemin);
+                border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--soluk); margin: 20px 2px 8px; }
+  h2 small { text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+  /* Ders sayfası konuları: disiplin kartı (TUSBuddy ünite kartı) › ders başlığı satırları */
+  .disiplin { padding: 0; overflow: hidden; }
+  .disiplin-ust { display: flex; align-items: stretch; }
+  .disiplin.acik .disiplin-ust { border-bottom: 1px solid var(--cizgi); }
+  .disiplin-coz { flex: 1; min-width: 0; border: 0; background: none; text-align: left; padding: 14px 4px 14px 16px; }
+  .disiplin-coz:active { background: var(--zemin); }
+  .disiplin-ac { flex: none; width: 48px; border: 0; border-left: 1px solid var(--cizgi); background: none; color: var(--soluk);
+                 display: grid; place-items: center; }
+  .disiplin-ac svg { transition: transform .15s; }
+  .disiplin.acik .disiplin-ac svg { transform: rotate(180deg); }
+  .disiplin .baslik { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 700; }
+  .disiplin .baslik .ad { min-width: 0; }
+  .disiplin .ozet { display: flex; justify-content: space-between; margin-top: 6px; font-size: 12.5px; color: var(--soluk); }
+  .disiplin .cubuk { height: 6px; margin-top: 8px; }
+  .baslik-ad { min-width: 0; flex: 1; }
+  .mini-cubuk { display: flex; height: 3px; margin-top: 5px; border-radius: 2px; background: var(--kara); overflow: hidden; }
+  .mini-cubuk span { display: block; height: 100%; }
+  .mini-cubuk .d { background: var(--dogru); } .mini-cubuk .y { background: var(--yanlis); }
+  .baslik-satir { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; text-align: left;
+                  border: 0; border-bottom: 1px solid var(--cizgi); background: none; padding: 11px 16px; font-size: 14px; }
+  .baslik-satir:disabled { color: var(--soluk); cursor: default; }
+  .baslik-satir .n { flex: none; font-size: 13px; font-weight: 700; color: var(--bordo-yazi); }
+  /* Konusu bugün başka kurulda işlenen başlığın kurul kodu */
+  .ref { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; font-size: 11.5px; font-weight: 700;
+         color: var(--soluk); background: var(--kara); vertical-align: 1px; white-space: nowrap; }
+  .baslik-satir:disabled .n { color: var(--soluk); font-weight: 500; }
+
+  /* Bölüm başlığı (Mezun Arama'daki gibi bordo ikon kutulu) */
+  .bolum-baslik { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 16.5px; font-weight: 700; }
+  .bolum-baslik.dis { margin: 20px 2px 10px; }
+  .bolum-ikon { flex: none; width: 30px; height: 30px; border-radius: 10px; background: var(--bordo); color: #fff;
+                display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(124, 23, 20, .25); }
+  .bolum-ikon svg { width: 17px; height: 17px; }
+
+  /* Kahraman + taşan sayı kartları */
+  .kahraman { margin: -16px -16px 0; padding: 22px 16px 58px; color: #fff;
+              background: radial-gradient(circle at 88% 10%, rgba(255, 255, 255, .14) 0, transparent 38%),
+                          radial-gradient(circle at 0% 100%, rgba(0, 0, 0, .22) 0, transparent 45%),
+                          linear-gradient(170deg, var(--bordo-koyu) 0%, var(--bordo) 100%); }
+  .kahraman p { margin: 0; font-size: 14px; color: rgba(255, 255, 255, .85); }
+  .kahraman h1 { margin: 2px 0 0; font-size: 23px; line-height: 1.25; letter-spacing: -.01em; }
+  .kahraman.ortali { text-align: center; }
+  .kahraman .yuzde { font-size: 56px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+  .sayilar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: -40px 0 16px; }
+  .sayilar.uc { grid-template-columns: repeat(3, 1fr); }
+  .sayi { display: flex; flex-direction: column; align-items: center; background: var(--kart); border: 1px solid var(--cizgi);
+          border-radius: 16px; padding: 10px 2px 9px; box-shadow: var(--golge-buyuk); }
+  .sayi svg { width: 18px; height: 18px; margin-bottom: 2px; color: var(--bordo-yazi); opacity: .85; }
+  .sayi b { font-size: 21px; line-height: 1.15; }
+  .sayi span { font-size: 12px; color: var(--soluk); }
+  .sayi.d svg { color: var(--dogru); opacity: 1; stroke-width: 2.5; }
+  .sayi.y svg { color: var(--yanlis); opacity: 1; stroke-width: 2.5; }
+  .sayi.b svg { color: var(--soluk); }
+
+  /* Kaldığın yerden devam: ana sayfanın en belirgin düğmesi */
+  .devam { display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 12px; padding: 14px 16px; border: 0;
+           border-radius: var(--yaricap); text-align: left; color: #fff; box-shadow: var(--golge-buyuk);
+           background: linear-gradient(160deg, var(--bordo) 0%, var(--bordo-koyu) 100%); }
+  .devam .oynat { flex: none; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, .16);
+                  display: grid; place-items: center; }
+  .devam .oynat svg { fill: currentColor; }
+  .devam .metin { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .devam .metin small { color: rgba(255, 255, 255, .8); font-size: 13px; }
+  .devam .cubuk { margin-top: 6px; background: rgba(255, 255, 255, .2); }
+  .devam .cubuk .d { background: #fff; }
+  .tum-kurullar { width: 100%; text-align: left; margin-top: 4px; }
+  .tum-kurullar .metin { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .tum-kurullar > svg { color: var(--soluk); }
+
+  /* İlerleme çubuğu (ders düzeyinde çözülme oranı) */
+  .oran { display: flex; justify-content: space-between; align-items: baseline; margin: 12px 0 6px; font-size: 14px; }
+  .oran b { font-size: 15px; }
+  .cubuk { height: 10px; border-radius: 5px; background: var(--kara); overflow: hidden; display: flex; }
+  .cubuk span { display: block; height: 100%; }
+  .cubuk .d { background: var(--dogru); } .cubuk .y { background: var(--yanlis); }
+  .lejant { display: flex; gap: 14px; margin-top: 8px; font-size: 12.5px; color: var(--soluk); }
+  .lejant i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+
+  .cipler { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px;
+         border: 1.5px solid var(--cizgi); border-radius: 18px; background: var(--kart);
+         font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .cip[aria-pressed="true"] { background: var(--bordo); border-color: var(--bordo); color: #fff; }
+  .cip:disabled, .cip:disabled[aria-pressed="true"] { opacity: .45; cursor: default; background: var(--kart);
+                                                     border-color: var(--cizgi); color: var(--soluk); }
+  .cip .n { font-size: 12px; font-weight: 700; color: var(--bordo-yazi); background: var(--bordo-zemin);
+            border-radius: 9px; padding: 0 6px; }
+  .cip[aria-pressed="true"] .n { color: var(--bordo); background: #fff; }
+  .cip .tamam { color: var(--dogru); font-size: 12px; font-weight: 700; }
+  .cip[aria-pressed="true"] .tamam { color: #fff; opacity: .85; }
+  .yil-satiri { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+  .yil-satiri b { flex: none; min-width: 44px; padding-top: 7px; white-space: nowrap; }
+  .kisayollar { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 2px 10px; }
+  .bag { background: none; border: 0; color: var(--bordo-yazi); font-size: 14px; font-weight: 600; padding: 0; }
+  .alt-bar { position: sticky; bottom: calc(68px + var(--alt-bosluk)); background: linear-gradient(transparent, var(--zemin) 30%);
+             padding: 18px 0 8px; }
+  .dugme { width: 100%; border: 0; border-radius: 12px; background: var(--bordo); color: #fff;
+           font-size: 16px; font-weight: 700; padding: 14px; }
+  .dugme.ikincil { background: var(--bordo-zemin); color: var(--bordo-yazi); }
+  .dugme.kucuk { width: auto; font-size: 14.5px; padding: 10px 16px; }
+  .dugme:disabled { opacity: .45; cursor: default; }
+  .dugmeler { display: grid; gap: 10px; }
+  .bos-durum { text-align: center; color: var(--soluk); padding: 32px 12px; }
+  .bos-durum svg { width: 36px; height: 36px; color: var(--bordo-yazi); opacity: .6; margin-bottom: 8px; }
+  .soru-ozet { font-size: 14px; color: var(--soluk); padding: 8px 0; border-top: 1px solid var(--cizgi);
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Soru kartı */
+  .soru-ust { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 8px; }
+  .soru-ust .kaynak { color: var(--bordo-yazi); font-weight: 700; min-width: 0; }
+  .soru-ust .kunye { color: var(--soluk); font-weight: 600; flex: none; white-space: nowrap; }
+  .tahmini { text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  .kok { font-weight: 600; white-space: pre-line; margin: 0 0 10px; }
+  .kok u { text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+  .soru-gorsel { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 12px; border-radius: 8px; background: #fff; }
+  /* --olcek: soru ve açıklama metninin yazı boyutu (Aa düğmesi); meta satırları sabit kalır */
+  .kok, .onculler, .gerekce { font-size: calc(16px * var(--olcek, 1)); }
+  .onculler { list-style: none; padding: 0; margin: 0 0 12px; }
+  .onculler li { display: flex; gap: 6px; margin-bottom: 4px; }
+  .onculler li .rakam { flex: none; width: 30px; font-weight: 700; }
+  .onculler li .oncul { flex: 1; min-width: 0; }
+  .secenek { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left;
+             border: 1.5px solid var(--cizgi); background: var(--kart); border-radius: 12px;
+             padding: 11px 12px; margin-bottom: 8px; font-size: calc(15px * var(--olcek, 1)); }
+  .secenek .metin { flex: 1; min-width: 0; }
+  /* Seçenek eleme: sağdaki simge ya da uzun basma şıkkın üstünü çizer; yalnızca cevaplamadan önce */
+  .secenek .ele { flex: none; width: 32px; height: 32px; margin: -6px -6px -6px 0; border-radius: 50%;
+                  display: grid; place-items: center; color: var(--soluk); opacity: .55; }
+  .secenek .ele svg { width: 17px; height: 17px; }
+  .secenek .ele:hover { opacity: 1; background: var(--kara); }
+  .secenek.elenmis { background: var(--zemin); color: var(--soluk); }
+  .secenek.elenmis .metin { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .secenek.elenmis .harf { opacity: .5; }
+  .secenek.elenmis .ele { opacity: 1; color: var(--bordo-yazi); }
+  .eleme-ipucu { margin: -2px 2px 10px; font-size: 12.5px; color: var(--soluk); }
+  .secenek { -webkit-touch-callout: none; user-select: none; }
+  .secenek .harf { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--cizgi);
+                   display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--soluk); }
+  .secenek .harf svg { width: 16px; height: 16px; stroke-width: 3; }
+  .secenek.secili { border-color: var(--bordo); background: var(--bordo-zemin); }
+  .secenek.secili .harf { border-color: var(--bordo); background: var(--bordo); color: #fff; }
+  .secenek.dogru { border-color: var(--dogru); background: var(--dogru-zemin); color: var(--dogru); font-weight: 600; }
+  .secenek.dogru .harf { border-color: var(--dogru); background: var(--dogru); color: var(--rozet-yazi, #fff); }
+  .secenek.yanlis { border-color: var(--yanlis); background: var(--yanlis-zemin); color: var(--yanlis); }
+  .secenek.yanlis .harf { border-color: var(--yanlis); background: var(--yanlis); color: var(--rozet-yazi, #fff); }
+  .soru-bilgi { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; font-size: 13px; }
+  .soru-bilgi .ders { color: var(--bordo-yazi); font-weight: 700; }
+  .soru-bilgi .id { color: var(--soluk); }
+  .sonuc { display: inline-flex; align-items: center; gap: 4px; border-radius: 8px; padding: 2px 8px; font-size: 12px;
+           font-weight: 700; color: var(--rozet-yazi, #fff); margin-right: 6px; }
+  .sonuc.d { background: var(--dogru); } .sonuc.y { background: var(--yanlis); }
+  .sonuc svg { width: 12px; height: 12px; stroke-width: 3; }
+  .soru-bilgi { gap: 8px; }
+  .soru-bilgi .id { flex: none; white-space: nowrap; }
+  .soru-bilgi .konu { color: var(--soluk); }
+
+  /* Benzer çıkmış sorular (TUSBuddy'deki "Bu soruya benzer çıkmış sorular" satırı) */
+  .benzer { border-top: 1px solid var(--cizgi); margin-top: 12px; padding-top: 10px; }
+  .benzer-grup { margin-bottom: 10px; }
+  .benzer-etiket { font-size: 12.5px; font-weight: 700; color: var(--bordo-yazi); margin-bottom: 6px; }
+  .benzer-etiket span { font-weight: 500; color: var(--soluk); }
+  .cipler.tek-satir { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 2px; }
+  .cipler.tek-satir::-webkit-scrollbar { display: none; }
+  .cip.kucuk { flex: none; height: 30px; padding: 0 10px; gap: 5px; font-size: 13px; border-width: 1.5px;
+               -webkit-touch-callout: none; user-select: none; }
+  .cip .kod { font-weight: 800; color: var(--bordo-yazi); }
+  .durum { display: inline-grid; place-items: center; }
+  .durum svg { width: 13px; height: 13px; stroke-width: 3; }
+  .durum.d { color: var(--dogru); } .durum.y { color: var(--yanlis); } .durum.b { color: var(--cizgi); }
+  .durum.i { color: var(--bordo-yazi); } .durum.i svg { fill: currentColor; }
+  .benzer-coz { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 11px; font-size: 15px; }
+  /* "4 kez çıktı" rozeti: soru kartının üst satırında, cevaptan önce de görünür */
+  .tekrar { display: inline-flex; align-items: center; gap: 3px; margin-right: 6px; padding: 1px 8px; border-radius: 999px;
+            background: var(--vurgu); color: var(--vurgu-yazi); font-size: 12px; font-weight: 700; vertical-align: 1px; }
+  .tekrar svg { width: 12px; height: 12px; stroke-width: 2.5; }
+  .onizleme { position: fixed; z-index: 45; width: max-content; max-width: min(320px, calc(100vw - 24px)); padding: 10px 12px;
+              border-radius: 12px; background: #1d1a1a; color: #fff; font-size: 13.5px; line-height: 1.4;
+              box-shadow: var(--golge-buyuk); pointer-events: none; }
+  .onizleme small { display: block; margin-bottom: 4px; font-size: 12px; color: rgba(255, 255, 255, .7); }
+  /* Benzer sorular katmanı açıkken soru kartının üstündeki şerit */
+  .katman { display: flex; align-items: center; gap: 8px; background: var(--bordo-zemin); color: var(--bordo-yazi);
+            border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; font-size: 13.5px; }
+  .katman b { flex: 1; min-width: 0; }
+
+  /* Soru listesi paneli */
+  .panel-ust { display: grid; gap: 8px; margin-bottom: 6px; }
+  .bolmeli { display: flex; background: var(--zemin); border: 1px solid var(--cizgi); border-radius: 12px; padding: 3px; }
+  .bolmeli button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 7px 4px; font-size: 13.5px;
+                    font-weight: 600; color: var(--soluk); }
+  .bolmeli button[aria-pressed="true"] { background: var(--kart); color: var(--bordo-yazi); box-shadow: var(--golge); }
+  .bolmeli button:disabled { opacity: .4; cursor: default; }
+  .grup-baslik { position: sticky; top: -4px; z-index: 1; display: flex; justify-content: space-between; background: var(--kart);
+                 padding: 12px 6px 6px; font-size: 13px; font-weight: 700; color: var(--bordo-yazi); border-bottom: 1px solid var(--cizgi); }
+  .alt-grup-baslik { display: flex; justify-content: space-between; gap: 10px; padding: 10px 6px 4px; font-size: 12.5px;
+                     font-weight: 600; color: var(--soluk); }
+  .liste-satir { display: flex; gap: 10px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--cizgi);
+                 background: none; padding: 9px 6px; }
+  .liste-satir.aktif { background: var(--bordo-zemin); border-radius: 10px; }
+  .liste-satir .no { flex: none; width: 30px; text-align: right; font-weight: 700; color: var(--soluk); font-size: 14px; }
+  .liste-satir .govde { flex: 1; min-width: 0; }
+  .liste-satir .kok-kisa { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .liste-satir .alt { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 2px;
+                      font-size: 12px; color: var(--soluk); }
+  .liste-satir .sonuc { margin-right: 0; }
+
+  /* Aksiyon satırı */
+  .aksiyonlar { display: flex; border-top: 1px solid var(--cizgi); margin: 12px -16px -16px; }
+  .aksiyonlar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px;
+                       border: 0; background: none; color: var(--soluk); font-size: 11.5px; font-weight: 600; }
+  .aksiyonlar button + button { border-left: 1px solid var(--cizgi); }
+  .aksiyonlar button svg { width: 20px; height: 20px; }
+  .aksiyonlar button[aria-pressed="true"] { color: var(--bordo-yazi); }
+  .aksiyonlar button[aria-pressed="true"] svg { fill: currentColor; }
+  .aksiyonlar button:disabled { opacity: .35; cursor: default; }
+  .aksiyonlar .bildir { color: var(--yanlis); }
+
+  /* Açıklama */
+  .ai-rozet { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; border: 0; border-radius: 999px;
+              background: var(--vurgu); color: var(--vurgu-yazi); font-size: 12px; font-weight: 700; padding: 3px 10px; }
+  .ai-rozet svg { width: 13px; height: 13px; }
+  .ai-bilgi { background: var(--vurgu); color: var(--vurgu-yazi); border-radius: 10px; padding: 8px 12px;
+              font-size: 13px; margin: -2px 0 10px; }
+  .gerekce { margin: 0; }
+  .alt-baslik { color: var(--bordo-yazi); font-weight: 700; font-size: 14.5px; margin: 14px 0 6px; }
+  .sik-aciklama { display: flex; gap: 8px; margin-bottom: 6px; font-size: calc(15px * var(--olcek, 1)); }
+  .sik-aciklama .harf { flex: none; font-weight: 800; color: var(--bordo-yazi); width: 22px; }
+  .sik-aciklama.secilen .harf { color: var(--yanlis); }
+  .ipucu { display: flex; gap: 10px; background: var(--bordo-zemin); border-radius: 12px; padding: 10px 12px; margin-top: 14px;
+           font-size: calc(14.5px * var(--olcek, 1)); }
+  .ipucu svg { color: var(--bordo-yazi); margin-top: 2px; }
+  .bilgi { background: var(--bordo-zemin); color: var(--bordo-yazi); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
+
+  /* Faydalı mı? */
+  .fayda { display: flex; align-items: center; gap: 10px; }
+  .fayda span { flex: 1; font-weight: 600; font-size: 15px; }
+  .fayda button { width: 44px; height: 40px; border-radius: 12px; border: 1.5px solid var(--cizgi); background: var(--kart);
+                  color: var(--soluk); display: grid; place-items: center; }
+  .fayda button svg { width: 20px; height: 20px; }
+  .fayda button[aria-pressed="true"] { border-color: var(--bordo); background: var(--bordo); color: #fff; }
+  textarea { width: 100%; min-height: 64px; border: 1.5px solid var(--cizgi); border-radius: 12px; padding: 10px 12px;
+             background: var(--kart); font-size: 14px; resize: vertical; margin-top: 10px; }
+  textarea:focus { outline: none; border-color: var(--bordo-yazi); box-shadow: 0 0 0 3px var(--bordo-zemin); }
+  .sag { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+  /* Alt sekmeler */
+  .sekmeler { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: var(--kart);
+              border-top: 1px solid var(--cizgi); padding-bottom: var(--alt-bosluk); }
+  .sekmeler button { position: relative; z-index: 0; flex: 1; height: 64px; border: 0; background: none; display: flex;
+                     flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px;
+                     font-weight: 600; color: var(--soluk); min-width: 0; white-space: nowrap; }
+  .sekmeler button svg { width: 22px; height: 22px; }
+  .sekmeler button::before { content: ""; position: absolute; inset: 6px 4px; z-index: -1; border-radius: 14px;
+                             background: var(--sekme-zemin); opacity: 0; transform: scale(.85);
+                             transition: opacity .2s ease, transform .2s ease; }
+  .sekmeler button[aria-selected="true"] { color: var(--bordo-yazi); }
+  .sekmeler button[aria-selected="true"]::before { opacity: 1; transform: none; }
+  .sekmeler .n { position: absolute; top: 8px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px;
+                 border-radius: 9px; background: var(--yanlis); color: #fff; font-size: 11px; line-height: 18px; }
+
+  /* Soru ekranında sekmelerin yerine geçen gezinme */
+  .gezinme { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--kart);
+             border-top: 1px solid var(--cizgi); padding-bottom: var(--alt-bosluk); }
+  .gezinme .ic { display: flex; align-items: center; gap: 10px; height: 68px; }
+  .gezinme button { display: flex; align-items: center; justify-content: center; gap: 4px; height: 46px; border-radius: 12px;
+                    font-weight: 700; font-size: 15px; }
+  .gezinme .onceki { width: 96px; border: 1.5px solid var(--cizgi); background: var(--kart); }
+  .gezinme .sonraki { width: 120px; border: 0; background: var(--bordo); color: #fff; }
+  .gezinme button:disabled { opacity: .35; cursor: default; }
+  .gezinme .konum { flex: 1; flex-direction: column; gap: 0; border: 0; background: none; text-align: center; font-weight: 700; }
+  .gezinme .konum small { display: flex; align-items: center; gap: 4px; font-weight: 500; font-size: 12px; color: var(--soluk); }
+  .gezinme .konum small svg { width: 13px; height: 13px; }
+
+  /* Alt pencere ve bildirim (Mezun Arama'daki gibi) */
+  .perde { position: fixed; inset: 0; z-index: 30; background: rgba(15, 8, 8, .45); opacity: 0; transition: opacity .2s; }
+  .perde.acik { opacity: 1; }
+  .pencere { position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-height: 85vh; display: flex;
+             flex-direction: column; background: var(--kart); border-radius: 20px 20px 0 0; max-width: 560px; margin: 0 auto;
+             padding-bottom: var(--alt-bosluk); transform: translateY(100%); transition: transform .22s ease-out;
+             box-shadow: 0 -8px 30px rgba(0, 0, 0, .2); }
+  .pencere.acik { transform: none; }
+  .pencere.uzun { height: 85vh; }  /* filtre değişince düğmeler yerinde kalsın */
+  .pencere .tutamac { width: 40px; height: 5px; border-radius: 3px; background: var(--cizgi); margin: 8px auto 0; }
+  .pencere header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; }
+  .pencere h3 { margin: 0; font-size: 18px; }
+  .pencere h3 small { display: block; font-size: 12.5px; font-weight: 500; color: var(--soluk); }
+  .pencere .kapat { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--zemin); font-size: 22px; }
+  .pencere .icerik { overflow-y: auto; padding: 4px 16px 16px; overscroll-behavior: contain; }
+  .pencere .etiket { font-size: 13px; color: var(--soluk); font-weight: 600; margin: 4px 0 8px; }
+  .pencere .etiket small { font-weight: 500; }
+  .ayar-not { margin: 10px 2px 4px; font-size: 12.5px; color: var(--soluk); }
+  .toast { position: fixed; left: 50%; bottom: calc(88px + var(--alt-bosluk)); z-index: 40; transform: translateX(-50%);
+           background: #1d1a1a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px;
+           opacity: 0; pointer-events: none; transition: opacity .2s; max-width: 90vw; }
+  .toast.acik { opacity: 1; }
+
+  /* Soru ekranındaki konu seçici (TUSBuddy ünite seçicisi) */
+  .secici { display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 10px; padding: 9px 12px; text-align: left;
+            border: 1.5px solid var(--cizgi); border-radius: 12px; background: var(--kart); font-size: 14.5px; font-weight: 600; }
+  .secici > span:first-of-type { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .secici svg { color: var(--bordo-yazi); }
+  .baslik-satir[aria-current="true"] { color: var(--bordo-yazi); font-weight: 700; background: var(--bordo-zemin); }
+  .baslik-satir.alt { padding-left: 32px; font-size: 13.5px; }
+  .arama-kutu { width: 100%; height: 44px; padding: 0 14px; margin-bottom: 8px; border: 1.5px solid var(--cizgi); border-radius: 12px;
+                background: var(--kart); font-size: 15px; }
+  .arama-kutu:focus { outline: none; border-color: var(--bordo-yazi); box-shadow: 0 0 0 3px var(--bordo-zemin); }
+
+  /* Çıkmış Soru Dağılımı */
+  .bolum-satir { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 18px 2px 8px; }
+  .bolum-satir h2 { margin: 0; }
+  .bolum-satir .bag { flex: none; display: inline-flex; align-items: center; }
+
+  /* Ders ekranı: kompakt özet ve tek satır ayar hapları */
+  .ozet-kart { padding: 12px 14px; }
+  .ozet-satir { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+  .ozet-satir b { font-size: 22px; line-height: 1; letter-spacing: -.02em; }
+  .ozet-satir span { color: var(--soluk); font-size: 13.5px; }
+  .ozet-satir .sag-yazi { margin-left: auto; color: var(--yazi); font-weight: 600; }
+  .cubuk.ince { height: 6px; }
+  .filtre-bar { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+  .filtre-bar::-webkit-scrollbar { display: none; }
+  .hap { flex: 1 1 auto; min-width: 0; justify-content: center; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; white-space: nowrap;
+         border: 1.5px solid var(--cizgi); border-radius: 18px; background: var(--kart); font-size: 14px; font-weight: 600; }
+  .hap svg { width: 16px; height: 16px; color: var(--soluk); flex: none; }
+  .hap span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .hap svg:last-child:not(:first-child) { width: 14px; height: 14px; margin-right: -3px; }
+  .hap[aria-pressed="true"] { border-color: var(--bordo); background: var(--bordo-zemin); color: var(--bordo-yazi); }
+  .hap[aria-pressed="true"] svg { color: var(--bordo-yazi); }
+  .pencere .bilgi { margin: 10px 0 4px; }
+  .dagilim-grup { border-bottom: 1px solid var(--cizgi); padding: 10px 0 6px; }
+  .dagilim-baslik { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .dagilim-baslik small { display: block; color: var(--soluk); font-size: 12px; }
+  .dagilim-satir { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0 5px 10px; font-size: 13.5px; }
+  .dagilim-satir .n { flex: none; font-weight: 700; color: var(--bordo-yazi); }
+
+  /* Sınav modu */
+  .panel-ust .dugme { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+
+  /* Ana sayfa: arama kutusu ve günün sorusu */
+  .kahraman .arama { position: relative; margin-top: 14px; }
+
+  /* Çalıştığım kurul */
+  .ust-dugme[aria-pressed="true"] { background: #fff; color: var(--bordo); }
+  .ust-dugme[aria-pressed="true"] svg { fill: currentColor; }
+  .kurulum { display: flex; flex-direction: column; gap: 6px; }
+  .kurulum-ac { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: none; padding: 0; text-align: left; }
+  .kurulum-ac .kod { flex: none; width: 58px; height: 58px; border-radius: 14px; display: grid; place-items: center; color: #fff;
+                     font-size: 17px; font-weight: 800; letter-spacing: -.02em;
+                     background: linear-gradient(160deg, var(--bordo), var(--bordo-koyu)); box-shadow: 0 3px 8px rgba(124, 23, 20, .25); }
+  .kurulum-ac .metin { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .kurulum-ac .metin b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kurulum-ac small { color: var(--soluk); font-size: 12.5px; }
+  .kurulum-ac > svg { color: var(--soluk); }
+  .kurulum .bag { align-self: flex-end; font-size: 13.5px; }
+  .kurulum-sec .bolum-baslik { margin-bottom: 4px; }
+  .aciklama-metin { margin: 0 0 12px; color: var(--soluk); font-size: 13.5px; }
+  .kahraman .arama svg { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--soluk); }
+  .kahraman .arama input { width: 100%; height: 52px; padding: 0 16px 0 44px; border: 0; border-radius: 14px;
+                           background: var(--kart); color: var(--yazi); font-size: 16px; box-shadow: var(--golge-buyuk); }
+  .kahraman .arama input:focus { outline: 3px solid rgba(255, 255, 255, .35); }
+  .kahraman:has(.arama) { padding-bottom: 62px; }
+  .bag svg { width: 15px; height: 15px; vertical-align: -3px; margin-right: 3px; }
+  mark { background: var(--vurgu); color: inherit; border-radius: 3px; padding: 0 1px; }
+</style>
+</head>
+<body>
+<header class="ust">
+  <div class="ic ust-ic">
+    <button class="geri" id="geri" type="button" aria-label="Geri"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="marka">
+      <img class="logo" src="logo-96.png" alt="" aria-hidden="true">
+      <span><b id="baslik">Soru Havuzu</b><small id="altBaslik">Cerrahpaşa Tıp Fakültesi</small></span>
+    </div>
+    <button class="ust-dugme" id="kurulumAc" type="button" hidden></button>
+    <button class="ust-dugme" id="yaziAc" type="button" aria-label="Ayarlar" title="Ayarlar"></button>
+    <button class="ust-dugme" id="listeAc" type="button" aria-label="Soru listesi" hidden></button>
+  </div>
+</header>
+<main class="ic" id="icerik"></main>
+
+<nav class="sekmeler" id="sekmeler" role="tablist"></nav>
+<nav class="gezinme" id="gezinme" hidden></nav>
+
+<div class="perde" id="perde" hidden></div>
+<section class="pencere" id="pencere" role="dialog" aria-modal="true" aria-labelledby="pBaslik" hidden>
+  <div class="tutamac"></div>
+  <header><h3 id="pBaslik"></h3><button class="kapat" id="pKapat" type="button" aria-label="Kapat">×</button></header>
+  <div class="icerik" id="pIcerik"></div>
+</section>
+<div class="toast" id="toast" role="status"></div>
+<div class="onizleme" id="onizleme" role="tooltip" hidden></div>
+
+<script src="veri.js"></script>
+<script>
+const SINAVLAR = window.SORU_VERISI || [];
+// Soru görsellerinin kökü: geliştirmede proje kökü ("../veri/gorsel/…"); yayın paketinde veri.js bunu "" yapar (yayin.py)
+const GORSEL_KOK = window.GORSEL_KOK ?? "../";
+const TURLER = { normal: "Normal / Vize", final: "Final", butunleme: "Bütünleme", mazeret: "Mazeret" };
+const TUR_ETIKET = { normal: "", final: "Final", butunleme: "Bütünleme", mazeret: "Mazeret" };
+
+// Çizgi ikonlar (Mezun Arama ile aynı tarz)
+const IKON = {
+  yildiz: '<path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/>',
+  geriAl: '<path d="M3 7v5h5"/><path d="M3.5 12A8.5 8.5 0 1 0 6 6"/>',
+  bayrak: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  tik: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  carpi: '<path d="M6 6l12 12M18 6L6 18"/>',
+  bos: '<circle cx="12" cy="12" r="8"/>',
+  sol: '<path d="M15 18l-6-6 6-6"/>',
+  sag: '<path d="M9 18l6-6-6-6"/>',
+  ampul: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>',
+  bilgi: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  ev: '<path d="M3 11l9-8 9 8M5 9.5V21h5v-6h4v6h5V9.5"/>',
+  kitap: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20"/>',
+  ayar: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  raptiye: '<path d="M12 16v6M8.5 3h7l-1 6.5 3.5 3V15h-12v-2.5l3.5-3z"/>',
+  kep: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
+  soru: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
+  takvim: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  oynat: '<path d="M7 4v16l13-8z"/>',
+  begen: '<path d="M7 10v11H4V10zM7 10l4-7a2 2 0 0 1 2 2v4h5.5a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.3 21H7"/>',
+  begenme: '<path d="M17 14V3h3v11zM17 14l-4 7a2 2 0 0 1-2-2v-4H5.5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.7 3H17"/>',
+  liste: '<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  kopya: '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+  ele: '<path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-2.9 3.5M6.6 7.6C4.4 9.1 3 12 3 12s4 6 9 6a9 9 0 0 0 4.4-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  asagi: '<path d="M6 9l6 6 6-6"/>',
+  ara: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  saat: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  grafik: '<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"/>',
+  yenile: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+  filtre: '<path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/>',
+  karistir: '<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+};
+const ikon = (ad, ek = "") => `<svg class="i" viewBox="0 0 24 24" ${ek}>${IKON[ad]}</svg>`;
+
+// Kullanıcı durumu tarayıcıda tutulur; prototip içindir.
+function oku(anahtar, varsayilan) {
+  try { return JSON.parse(localStorage.getItem(anahtar)) ?? varsayilan; } catch { return varsayilan; }
+}
+function yaz(anahtar, deger) {
+  try { localStorage.setItem(anahtar, JSON.stringify(deger)); } catch {}
+}
+const cevaplar = oku("csh-cevaplar", {});
+const favoriler = new Set(oku("csh-favoriler", []));
+// Prototipte bildirim ve oylar tarayıcıda kalır; gerçek sürümde sunucuya gidip moderasyon paneline düşer.
+const bildirimler = oku("csh-bildirimler", []);
+const oylar = oku("csh-oylar", {});
+const BILDIRIM_NEDENLERI = ["Cevap yanlış", "Soru metninde hata", "Açıklama hatalı/yetersiz", "Diğer"];
+const OLCEKLER = [0.9, 1, 1.1, 1.2, 1.35];  // yazı boyutu kademeleri
+let olcek = oku("csh-yazi-olcek", 1);
+const olcekUygula = () => document.documentElement.style.setProperty("--olcek", olcek);
+olcekUygula();
+// Tema (otomatik / acik / koyu) ve görünüm (standart / ekitap) Ayarlar'dan seçilir, tarayıcıda saklanır
+let tema = oku("csh-tema", "otomatik"), gorunum = oku("csh-gorunum", "standart");
+function gorunumUygula() {
+  const kok = document.documentElement;
+  tema === "otomatik" ? delete kok.dataset.tema : kok.dataset.tema = tema;
+  gorunum === "ekitap" ? kok.dataset.gorunum = "ekitap" : delete kok.dataset.gorunum;
+}
+gorunumUygula();
+
+// Tüm soruları düz bir listeye çevir. Kalıcı anahtar (s.id = sinav_id#no) derlemede gelir (scripts/anahtar.py).
+const DERSLER = {};
+const SORULAR = {};
+const ESKI_ID = {};  // eski biçim `ders/sinav/no` → yeni anahtar; tarayıcıdaki kayıtları taşımak için
+for (const k of SINAVLAR) {
+  const d = DERSLER[k.ders.id] ??= { ...k.ders, sinavlar: [] };
+  d.sinavlar.push(k);
+  const eskiSinav = k.sinav.id.startsWith(k.ders.id + "-") ? k.sinav.id.slice(k.ders.id.length + 1) : k.sinav.id;
+  for (const s of k.sorular) {
+    s.kisa = k.ders.kod  // komite: #3004-19F-01 (kod · eğitim yılı · sınav türünün baş harfi · soru)
+      ? `#${k.ders.kod}-${k.sinav.kunye.slice(2, 4)}${k.sinav.kunye.split("/")[1][0]}-${String(s.no).padStart(2, "0")}`
+      : `#${k.ders.ad.split(" ").map(w => w[0]).join("")}${k.sinav.tarih.slice(0, 7).replace("-", "")}-${String(s.no).padStart(2, "0")}`;
+    s.sinav = k.sinav;
+    s.ders = k.ders;
+    SORULAR[s.id] = s;
+    ESKI_ID[`${k.ders.id}/${eskiSinav}/${s.no}`] = s.id;
+  }
+}
+
+// Bir kerelik: eski biçimli anahtarlarla kaydedilmiş cevap, favori, oy, bildirim ve son oturumu yeni anahtara taşı.
+if (oku("csh-anahtar-surumu", 1) < 2) {
+  const cevir = id => ESKI_ID[id] ?? id;
+  const tasi = nesne => {
+    for (const [id, v] of Object.entries(nesne)) if (ESKI_ID[id]) { nesne[ESKI_ID[id]] ??= v; delete nesne[id]; }
+  };
+  tasi(cevaplar); tasi(oylar);
+  const fav = [...favoriler].map(cevir);
+  favoriler.clear(); fav.forEach(id => favoriler.add(id));
+  for (const b of bildirimler) b.soru = cevir(b.soru);
+  const son = oku("csh-son-oturum", null);
+  if (son) yaz("csh-son-oturum", { ...son, idler: son.idler.map(cevir) });
+  yaz("csh-cevaplar", cevaplar); yaz("csh-favoriler", [...favoriler]); yaz("csh-oylar", oylar);
+  yaz("csh-bildirimler", bildirimler); yaz("csh-anahtar-surumu", 2);
+}
+const dersSorulari = d => d.sinavlar.flatMap(k => k.sorular);
+const yanlisMi = s => s.dogru && cevaplar[s.id] && cevaplar[s.id] !== s.dogru;
+const dogruMu = s => s.dogru && cevaplar[s.id] === s.dogru;
+// Etiketli kurullarda soru tek bir ders başlığına bağlıdır (s.etiket.konu, veri/etiketler); disiplin ve sıra
+// müfredat ağacından (window.MUFREDAT) türetilir. Etiketsiz kurullarda bölüm tahmini kullanılır (s.konu, iliskiler.py).
+// Konusu bugün başka kurulda işlenen sorular kendi kurulunda kalır; başlıkları `ref` (o kurulun kodu) taşır.
+const MUFREDAT = window.MUFREDAT || {};
+const BASLIKLAR = {};  // kurul → ders başlığı id → { ad, grup, grupAd, kurul, ref, n: kurul içindeki görüntü sırası }
+for (const [kurul, k] of Object.entries(MUFREDAT)) {
+  BASLIKLAR[kurul] = {};
+  k.basliklar.forEach((b, n) => BASLIKLAR[kurul][b.id] = { ...b, grupAd: k.gruplar[b.grup], kurul, ref: b.kurul, n });
+}
+const baslikOf = s => !s.etiket ? null : s.etiket.konu === "belirsiz"
+  ? { id: "belirsiz", ad: "Metni eksik sorular", grup: "belirsiz", grupAd: "Belirsiz", kurul: s.ders.kod, n: 1e6 }
+  : BASLIKLAR[s.ders.kod]?.[s.etiket.konu];
+const baslikAdi = b => esc(b.ad) + (b.ref ? ` <span class="ref">${b.ref}</span>` : "");
+const KONUSUZ = "Konu atanmamış";
+const konuAdi = s => baslikOf(s)?.grupAd || s.konu || KONUSUZ;
+const konuSirasi = (a, b) => {
+  const x = baslikOf(a), y = baslikOf(b);
+  if (x && y) return x.kurul.localeCompare(y.kurul) || x.n - y.n;
+  if (x || y) return x ? -1 : 1;
+  return (konuAdi(a) === KONUSUZ) - (konuAdi(b) === KONUSUZ) || konuAdi(a).localeCompare(konuAdi(b), "tr");
+};
+// Soru kartının üst satırı: "Anatomi › Üst Ekstremite Kemikleri"; tahmini etiket noktalı alt çizgiyle belirtilir.
+const konuKisa = s => {
+  const b = baslikOf(s);
+  const tahmini = b ? s.etiket.durum !== "onayli" : s.konu_tahmini;
+  const metin = b ? `${esc(b.grupAd)} › ${baslikAdi(b)}` : s.konu ? esc(s.konu) : `Cerrahpaşa ${sinavAdi(s.sinav)}`;
+  return tahmini ? `<span class="tahmini" title="Konu etiketi tahmini; editör onayı bekliyor">${metin}</span>` : metin;
+};
+// Kurul ekranlarında başlık yalnızca kurul kodu ("1003"); kodu olmayan derslerde (staj) ders adı.
+const kurulAdi = d => d.kod || d.ad;
+const konuEtiketi = s => {  // listelerdeki " · Anatomi › Üst Ekstremite Kemikleri (tahmini)"
+  const b = baslikOf(s);
+  if (b) return ` · ${esc(b.grupAd)} › ${baslikAdi(b)}${s.etiket.durum !== "onayli" ? " (tahmini)" : ""}`;
+  return s.konu ? ` · ${esc(s.konu)}${s.konu_tahmini ? " (tahmini)" : ""}` : "";
+};
+// Benzer çıkmış sorular üç grupta: aynı soru (neredeyse aynı, bu kurulda), benzer konu (bu kurulda), başka kurullar.
+function benzerGruplari(s) {
+  const g = { ayni: [], benzer: [], diger: [] };
+  for (const [id, seviye] of s.benzer || []) {
+    const x = SORULAR[id];
+    if (x) (x.ders.id !== s.ders.id ? g.diger : seviye === 5 ? g.ayni : g.benzer).push(x);
+  }
+  for (const l of Object.values(g)) l.sort(yeniOnce);
+  return g;
+}
+// Çipteki durum: ✓ doğru, ✕ yanlış, ○ çözülmedi (anahtarı olmayan işaretli soru da ○ ama dolu)
+const durumIkon = x => !cevaplar[x.id] ? `<span class="durum b" title="Çözülmedi">${ikon("bos")}</span>`
+  : !x.dogru ? `<span class="durum i" title="İşaretli">${ikon("bos")}</span>`
+  : dogruMu(x) ? `<span class="durum d" title="Doğru">${ikon("tik")}</span>` : `<span class="durum y" title="Yanlış">${ikon("carpi")}</span>`;
+// Sorunun (ya da neredeyse aynısının) çıktığı farklı sınav sayısı; soru kartındaki "4 kez çıktı" rozeti
+const tekrarSayisi = s => new Set([s.sinav.id, ...(s.benzer || []).filter(([id, v]) => v === 5 && SORULAR[id])
+  .map(([id]) => SORULAR[id].sinav.id)]).size;
+const yeniOnce = (a, b) => b.sinav.tarih.localeCompare(a.sinav.tarih) || parseInt(a.no) - parseInt(b.no);
+
+const $ = s => document.querySelector(s);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const kalin = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");  // açıklamalarda yalnız **kalın** desteklenir
+// Arama ve süzgeçler için: küçük harf, Türkçe harfler katlanmış ("Şaperon" → "saperon")
+const katla = t => String(t).toLocaleLowerCase("tr").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ı/g, "i");
+const aiAciklama = s => s.dogru_kaynak === "ai" || s.aciklama?.kaynak === "ai";
+const ROMA = ["I", "II", "III", "IV", "V", "VI"];
+const komiteSinavi = k => /^\d{4}-\d{2}\//.test(k.kunye);  // künye "2025-26/Vize" biçiminde
+const sinavAdi = k => komiteSinavi(k) ? "Komite sınavı" : k.tur === "normal" ? "Staj sınavı" : TURLER[k.tur];
+// yıl başlığı: staj sınavında takvim yılı ("2026"), komitede eğitim yılı ("2025-26")
+const sinavYili = k => komiteSinavi(k) ? k.kunye.split("/")[0] : k.tarih.slice(0, 4);
+
+// Çalıştığım kurul: seçiliyse uygulama her açılışta doğrudan o kurulun ekranında açılır; ana sayfaya geri ile dönülür.
+let kurulum = oku("csh-kurulum", null);
+if (!DERSLER[kurulum]) kurulum = null;
+let durum = kurulum ? { ekran: "ders", ders: kurulum, donus: { ekran: "ana" }, kaynakSekme: "ana" } : { ekran: "ana" };
+let secim = null;   // ders ekranındaki filtreler
+let oturum = null;  // soru çözme oturumu
+let yigin = [];     // benzer sorular açıldığında alttaki oturumlar; ✕/geri ile en üsttekinden dönülür
+let sonUzunBasma = 0;  // şık eleme: uzun basmanın zamanı (ardından gelen tıklamayı yutmak için)
+
+// ---------- ortak bileşenler ----------
+function git(yeni) { pencereKapat(); durum = yeni; ciz(); window.scrollTo(0, 0); }
+function ust(baslik, alt) { $("#baslik").textContent = baslik; $("#altBaslik").textContent = alt; }
+
+let toastZaman;
+function toast(mesaj) {
+  const t = $("#toast"); t.textContent = mesaj; t.classList.add("acik");
+  clearTimeout(toastZaman); toastZaman = setTimeout(() => t.classList.remove("acik"), 2200);
+}
+
+let pencereCiz = null;  // açık pencerenin yeniden çizim işlevi
+function pencereAc(baslik, cizici, uzun = false) {
+  pencereCiz = cizici;
+  $("#pBaslik").innerHTML = baslik;
+  $("#pencere").classList.toggle("uzun", uzun);
+  $("#perde").hidden = $("#pencere").hidden = false;
+  document.body.classList.add("kilitli");
+  cizici();
+  requestAnimationFrame(() => { $("#perde").classList.add("acik"); $("#pencere").classList.add("acik"); });
+}
+function pencereKapat() {
+  if ($("#pencere").hidden) return;
+  pencereCiz = null;
+  $("#perde").classList.remove("acik"); $("#pencere").classList.remove("acik");
+  document.body.classList.remove("kilitli");
+  setTimeout(() => { if (!pencereCiz) $("#perde").hidden = $("#pencere").hidden = true; }, 220);
+}
+$("#listeAc").innerHTML = ikon("liste");
+$("#yaziAc").innerHTML = ikon("ayar");
+$("#yaziAc").onclick = () => ayarlarPenceresi();
+$("#perde").onclick = pencereKapat;
+$("#pKapat").onclick = pencereKapat;
+document.addEventListener("keydown", e => { if (e.key === "Escape") pencereKapat(); });
+
+// ---------- gezinme ----------
+const SEKMELER = [["ana", "Ana sayfa", "ev"], ["dersler", "Dersler", "kitap"], ["yanlislar", "Yanlışlarım", "carpi"], ["favoriler", "Favoriler", "yildiz"]];
+const sekmeOf = e => ({ sinif: "ana", arama: "ana", ders: durum.kaynakSekme || "dersler", ozet: durum.kaynakSekme || "dersler" }[e] || e);
+
+$("#geri").onclick = () => {
+  if (durum.ekran === "soru" && yigin.length) benzerKapat();
+  else if (durum.ekran === "soru" || durum.ekran === "ozet") git(oturum.donus);
+  else if (durum.ekran === "ders") git(durum.donus || { ekran: "dersler" });
+  else git({ ekran: "ana" });
+};
+
+function ciz() {
+  const soruEkrani = durum.ekran === "soru";
+  $("#geri").hidden = SEKMELER.some(([e]) => e === durum.ekran);
+  $("#listeAc").hidden = !soruEkrani;
+  const kurulEkrani = durum.ekran === "ders";  // üst çubuktaki raptiye: bu kurulu "çalıştığım kurul" yap
+  $("#kurulumAc").hidden = !kurulEkrani;
+  if (kurulEkrani) {
+    const secili = kurulum === durum.ders;
+    $("#kurulumAc").innerHTML = ikon("raptiye");
+    $("#kurulumAc").setAttribute("aria-pressed", secili);
+    $("#kurulumAc").setAttribute("aria-label", secili ? "Çalıştığım kurul (kaldır)" : "Çalıştığım kurul yap");
+    $("#kurulumAc").title = secili ? "Çalıştığın kurul; uygulama burada açılır" : "Çalıştığım kurul yap";
+  }
+  $("#sekmeler").hidden = soruEkrani;
+  $("#gezinme").hidden = !soruEkrani;
+  const yanlisSayisi = Object.values(SORULAR).filter(yanlisMi).length;
+  $("#sekmeler").innerHTML = SEKMELER.map(([e, ad, ik]) =>
+    `<button type="button" role="tab" data-sekme="${e}" aria-selected="${sekmeOf(durum.ekran) === e}">${ikon(ik)}${ad}
+      ${e === "yanlislar" && yanlisSayisi ? `<span class="n">${yanlisSayisi}</span>` : ""}</button>`).join("");
+  document.querySelectorAll("[data-sekme]").forEach(el => el.onclick = () => git({ ekran: el.dataset.sekme }));
+  ({ ana: cizAna, dersler: cizDersler, yanlislar: cizYanlislar, favoriler: cizFavoriler,
+     sinif: cizSinif, arama: cizArama, ders: cizDers, soru: cizSoru, ozet: cizOzet })[durum.ekran]();
+}
+
+function dersKarti(d) {
+  const sorular = dersSorulari(d);
+  const cozulen = sorular.filter(s => cevaplar[s.id]).length;
+  return `<div class="kutu liste-ogesi" data-ders="${d.id}">
+    <div><b>${esc(d.ad)}</b><div class="alt">${d.sinif}. Sınıf · ${d.sinavlar.length} sınav · ${cozulen}/${sorular.length} çözüldü</div></div>
+    <span class="sayi-rozet">${sorular.length} soru</span></div>`;
+}
+function dersKartlariniBagla(donus) {
+  document.querySelectorAll("[data-ders]").forEach(el => el.onclick = () => {
+    secim = null; git({ ekran: "ders", ders: el.dataset.ders, donus, kaynakSekme: sekmeOf(donus.ekran) });
+  });
+}
+
+// ---------- ana sayfa ----------
+function sonOturum() {
+  const o = oku("csh-son-oturum", null);
+  if (!o) return null;
+  const liste = o.idler.map(id => SORULAR[id]).filter(Boolean);
+  return liste.length && o.i < liste.length ? { ...o, liste } : null;
+}
+
+function cizAna() {
+  ust("Soru Havuzu", "Cerrahpaşa Tıp Fakültesi");
+  const tum = Object.values(SORULAR);
+  const cozulen = tum.filter(s => cevaplar[s.id]).length;
+  const son = sonOturum();
+  const dolu = [1, 2, 3, 4, 5, 6].filter(n => Object.values(DERSLER).some(d => d.sinif === n));
+
+  $("#icerik").innerHTML = `
+    <div class="kahraman"><p>Hoş geldin 👋</p><h1>Cerrahpaşa sınavları, tek yerde</h1>
+      <div class="arama">${ikon("ara")}<input id="ana-ara" type="search" placeholder="Soru, ders ya da konu ara" autocomplete="off" aria-label="Ara"></div></div>
+    <div class="sayilar">
+      <div class="sayi">${ikon("soru")}<b>${tum.length}</b><span>soru</span></div>
+      <div class="sayi">${ikon("kitap")}<b>${Object.keys(DERSLER).length}</b><span>ders</span></div>
+      <div class="sayi">${ikon("takvim")}<b>${SINAVLAR.length}</b><span>sınav</span></div>
+      <div class="sayi">${ikon("tik")}<b>${cozulen}</b><span>çözdüğün</span></div>
+    </div>
+    ${kurulumKarti()}
+    ${son ? `
+    <button class="devam" id="devam">
+      <span class="oynat">${ikon("oynat")}</span>
+      <span class="metin"><b>Kaldığın yerden devam et</b>
+        <small>${esc(kurulAdi(DERSLER[son.ders]))} · ${son.i + 1}/${son.liste.length}. soru</small>
+        <span class="cubuk ince"><span class="d" style="width:${(100 * son.i / son.liste.length).toFixed(1)}%"></span></span></span>
+      ${ikon("sag")}</button>` : ""}
+    <button class="kutu liste-ogesi tum-kurullar" id="tum-kurullar"><span class="bolum-ikon">${ikon("kep")}</span>
+      <span class="metin"><b>Tüm kurullar ve dersler</b>
+        <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length} soru</span></span>${ikon("sag")}</button>`;
+
+  kurulumBagla();
+  if (son) $("#devam").onclick = () => {
+    yigin = [];
+    oturum = yeniOturum({ temel: son.liste, i: son.i, ders: son.ders, donus: { ekran: "ana" } });
+    git({ ekran: "soru" });
+  };
+  $("#tum-kurullar").onclick = () => git({ ekran: "dersler" });
+  $("#ana-ara").oninput = e => git({ ekran: "arama", q: e.target.value });
+}
+
+// ---------- çalıştığım kurul ----------
+function kurulumYap(id) {
+  kurulum = id; yaz("csh-kurulum", id);
+}
+function kurulCipleri(seciliId) {  // sınıf satırlarında kurul kodları; sorusu olmayan kurullar gösterilmez
+  return [1, 2, 3, 4, 5, 6].map(n => {
+    const dersler = Object.values(DERSLER).filter(d => d.sinif === n && dersSorulari(d).length);
+    return dersler.length ? `<div class="yil-satiri"><b>${n}. Sınıf</b><div class="cipler">${dersler.map(d =>
+      `<button class="cip" data-kurul-sec="${d.id}" aria-pressed="${d.id === seciliId}" title="${esc(d.ad)}">${esc(kurulAdi(d))}</button>`).join("")}</div></div>` : "";
+  }).join("");
+}
+function kurulumKarti() {
+  const d = DERSLER[kurulum];
+  if (!d) return `
+    <div class="kutu kurulum-sec">
+      <div class="bolum-baslik"><span class="bolum-ikon">${ikon("raptiye")}</span>Hangi kuruldasın?</div>
+      <p class="aciklama-metin">Seç; uygulama her açılışta doğrudan o kurulda açılsın.</p>
+      ${kurulCipleri(null)}
+    </div>`;
+  const tum = dersSorulari(d), c = tum.filter(s => cevaplar[s.id]).length;
+  const yuzde = n => (100 * n / tum.length).toFixed(1);
+  return `
+    <div class="kutu kurulum">
+      <button class="kurulum-ac" id="kurulum-ac">
+        <span class="kod">${esc(kurulAdi(d))}</span>
+        <span class="metin"><small>Çalıştığın kurul</small><b>${esc(d.ad)}</b>
+          <span class="cubuk ince"><span class="d" style="width:${yuzde(tum.filter(dogruMu).length)}%"></span><span class="y" style="width:${yuzde(tum.filter(yanlisMi).length)}%"></span></span>
+          <small>${c}/${tum.length} soru çözüldü</small></span>
+        ${ikon("sag")}</button>
+      <button class="bag" id="kurulum-degistir">Değiştir</button>
+    </div>`;
+}
+function kurulumBagla() {
+  const ac = id => { secim = null; git({ ekran: "ders", ders: id, donus: { ekran: "ana" }, kaynakSekme: "ana" }); };
+  document.querySelectorAll("#icerik [data-kurul-sec]").forEach(el => el.onclick = () => {
+    kurulumYap(el.dataset.kurulSec); toast(`${kurulAdi(DERSLER[kurulum])} kaydedildi; uygulama artık burada açılacak`); ac(kurulum);
+  });
+  if ($("#kurulum-ac")) $("#kurulum-ac").onclick = () => ac(kurulum);
+  if ($("#kurulum-degistir")) $("#kurulum-degistir").onclick = () => pencereAc("Çalıştığın kurul<small>Uygulama her açılışta burada açılır</small>", () => {
+    $("#pIcerik").innerHTML = `${kurulCipleri(kurulum)}
+      <button class="dugme ikincil" id="kurulum-kaldir" style="margin-top:8px">Seçimi kaldır</button>`;
+    document.querySelectorAll("#pIcerik [data-kurul-sec]").forEach(el => el.onclick = () => { kurulumYap(el.dataset.kurulSec); ac(kurulum); });
+    $("#kurulum-kaldir").onclick = () => { kurulumYap(null); pencereKapat(); ciz(); };
+  });
+}
+$("#kurulumAc").onclick = () => {
+  const id = durum.ders;
+  kurulumYap(kurulum === id ? null : id);
+  ciz();
+  toast(kurulum ? `${kurulAdi(DERSLER[id])} çalıştığın kurul; uygulama burada açılacak` : "Çalıştığın kurul kaldırıldı");
+};
+
+// ---------- arama ----------
+// Kök, öncül, şık, ders ve konu adlarında arar; tüm sözcükler geçmeli. Türkçe harfler katlanır ("saperon" = "şaperon").
+const aramaMetni = s => s._ara ??= katla([s.kok, ...(s.onculler || []), ...Object.values(s.secenekler), s.ders.ad,
+  s.sinav.kunye, baslikOf(s)?.ad || "", baslikOf(s)?.grupAd || s.konu || ""].join(" "));
+function isaretle(metin, sozcukler) {  // katlama harf sayısını korur; korumazsa işaretsiz döner
+  const k = katla(metin);
+  if (k.length !== metin.length) return esc(metin);
+  const isaret = new Array(metin.length).fill(false);
+  for (const w of sozcukler) for (let i = k.indexOf(w); i >= 0; i = k.indexOf(w, i + 1)) isaret.fill(true, i, i + w.length);
+  let h = "", acik = false;
+  for (let i = 0; i < metin.length; i++) {
+    if (isaret[i] !== acik) { h += isaret[i] ? "<mark>" : "</mark>"; acik = isaret[i]; }
+    h += esc(metin[i]);
+  }
+  return h + (acik ? "</mark>" : "");
+}
+function cizArama() {
+  ust("Ara", "Soru, ders ya da konu");
+  $("#icerik").innerHTML = `<input class="arama-kutu" id="ara" type="search" placeholder="Soru, ders ya da konu ara" autocomplete="off" aria-label="Ara">
+    <div id="sonuclar"></div>`;
+  const kutu = $("#ara");
+  kutu.value = durum.q || "";
+  kutu.focus();
+  let zaman;
+  kutu.oninput = () => { clearTimeout(zaman); zaman = setTimeout(() => { durum.q = kutu.value; sonuclariCiz(); }, 150); };
+  sonuclariCiz();
+}
+function sonuclariCiz() {
+  const sozcukler = katla(durum.q || "").split(/\s+/).filter(w => w.length >= 2);
+  if (!sozcukler.length) {
+    $("#sonuclar").innerHTML = `<div class="bos-durum">${ikon("ara")}<div>En az iki harf yaz. Örnek: <b>humerus</b>, <b>ki-kare</b>, <b>şaperon</b></div></div>`;
+    return;
+  }
+  const uyar = metin => sozcukler.every(w => katla(metin).includes(w));
+  const dersler = Object.values(DERSLER).filter(d => uyar(`${d.ad} ${d.kod || ""}`));
+  const basliklar = Object.values(BASLIKLAR).flatMap(x => Object.values(x)).filter(b => uyar(b.ad)).slice(0, 12);
+  const sorular = Object.values(SORULAR).filter(s => sozcukler.every(w => aramaMetni(s).includes(w))).sort(yeniOnce);
+  const GOSTER = 60;
+  $("#sonuclar").innerHTML = `
+    ${dersler.length ? `<h2>Dersler</h2><div class="cipler">${dersler.map(d => `<button class="cip" data-ara-ders="${d.id}">${esc(d.ad)}</button>`).join("")}</div>` : ""}
+    ${basliklar.length ? `<h2>Ders başlıkları</h2><div class="cipler">${basliklar.map((b, i) =>
+      `<button class="cip" data-ara-baslik="${i}">${baslikAdi(b)} <span class="n">${b.kurul}</span></button>`).join("")}</div>` : ""}
+    <h2>Sorular <small>· ${sorular.length} sonuç${sorular.length > GOSTER ? `, ilk ${GOSTER} gösteriliyor` : ""}</small></h2>
+    ${sorular.length ? `<div class="kutu" style="padding:6px 10px">${sorular.slice(0, GOSTER).map((s, i) => `
+      <button class="liste-satir" data-sonuc="${i}"><span class="no">${i + 1}</span>
+        <span class="govde"><span class="kok-kisa">${isaretle(s.kok, sozcukler)}</span>
+          <span class="alt"><span>${esc(s.ders.ad)} · ${esc(s.sinav.kunye)}${konuEtiketi(s)}</span>${cevaplar[s.id] && s.dogru
+            ? `<span class="sonuc ${dogruMu(s) ? "d" : "y"}">${dogruMu(s) ? "Doğru" : "Yanlış"}</span>` : ""}</span></span>
+      </button>`).join("")}</div>` : `<div class="bos-durum">Eşleşen soru yok.</div>`}`;
+  document.querySelectorAll("[data-ara-ders]").forEach(el => el.onclick = () => {
+    secim = null; git({ ekran: "ders", ders: el.dataset.araDers, donus: durum, kaynakSekme: "ana" });
+  });
+  document.querySelectorAll("[data-ara-baslik]").forEach(el => el.onclick = () => {
+    const b = basliklar[+el.dataset.araBaslik];
+    const liste = Object.values(SORULAR).filter(s => s.ders.kod === b.kurul && baslikOf(s)?.id === b.id).sort(yeniOnce);
+    if (liste.length) oturumBaslat(liste, liste[0].ders.id, durum);
+  });
+  document.querySelectorAll("[data-sonuc]").forEach(el => el.onclick = () =>
+    oturumBaslat(sorular, sorular[+el.dataset.sonuc].ders.id, durum, false, "oturum", { i: +el.dataset.sonuc }));
+}
+
+function cizSinif() {
+  ust(`${durum.sinif}. Sınıf`, durum.sinif <= 3 ? "Komiteler" : "Dersler / Stajlar");
+  $("#icerik").innerHTML = Object.values(DERSLER).filter(d => d.sinif === durum.sinif).map(dersKarti).join("");
+  dersKartlariniBagla(durum);
+}
+
+// ---------- sekmeler ----------
+function cizDersler() {
+  ust("Dersler", "Tüm sınıflar");
+  let h = "";
+  for (let n = 1; n <= 6; n++) {
+    const dersler = Object.values(DERSLER).filter(d => d.sinif === n);
+    if (dersler.length) h += `<h2>${n}. Sınıf</h2>` + dersler.map(dersKarti).join("");
+  }
+  $("#icerik").innerHTML = h || `<div class="bos-durum">Henüz ders eklenmedi.</div>`;
+  dersKartlariniBagla(durum);
+}
+
+// Yanlışlarım ve Favoriler aynı düzeni kullanır: ders başına kart, soru önizlemeleri, "Çöz" butonu.
+function cizSoruListesi({ baslik, alt, sorular, bosIkon, bosMetin, cevaplariSil }) {
+  ust(baslik, alt);
+  const gruplar = {};
+  for (const s of sorular) (gruplar[s.ders.id] ??= []).push(s);
+  if (!sorular.length) {
+    $("#icerik").innerHTML = `<div class="bos-durum">${ikon(bosIkon)}<div>${bosMetin}</div></div>`;
+    return;
+  }
+  $("#icerik").innerHTML = Object.entries(gruplar).map(([dersId, liste]) => `
+    <div class="kutu">
+      <div class="liste-ogesi" style="cursor:default;margin-bottom:8px">
+        <div><b>${esc(DERSLER[dersId].ad)}</b><div class="alt">${liste.length} soru</div></div>
+        <button class="dugme kucuk" data-coz="${dersId}">Çöz</button></div>
+      ${liste.slice(0, 5).map(s => `<div class="soru-ozet">${esc(s.sinav.kunye)} · ${s.no}) ${esc(s.kok)}</div>`).join("")}
+      ${liste.length > 5 ? `<div class="soru-ozet">+${liste.length - 5} soru daha</div>` : ""}
+    </div>`).join("");
+  document.querySelectorAll("[data-coz]").forEach(el => el.onclick = () => {
+    const liste = gruplar[el.dataset.coz];
+    if (cevaplariSil) { for (const s of liste) delete cevaplar[s.id]; yaz("csh-cevaplar", cevaplar); }
+    oturumBaslat(liste, el.dataset.coz, durum);
+  });
+}
+function cizYanlislar() {
+  cizSoruListesi({ baslik: "Yanlışlarım", alt: "Tekrar çözmek için seç", sorular: Object.values(SORULAR).filter(yanlisMi),
+                   bosIkon: "tik", bosMetin: "Yanlış cevapladığın soru yok.", cevaplariSil: true });
+}
+function cizFavoriler() {
+  cizSoruListesi({ baslik: "Favoriler", alt: "Yıldızladığın sorular", sorular: [...favoriler].map(id => SORULAR[id]).filter(Boolean),
+                   bosIkon: "yildiz", bosMetin: "Soru kartındaki ☆ ile favori ekleyebilirsin.", cevaplariSil: false });
+}
+
+// ---------- ders ekranı ----------
+function filtrele(d) {
+  return dersSorulari(d).filter(s =>
+    secim.turler.has(s.sinav.tur) && secim.sinavlar.has(s.sinav.id) &&
+    (secim.ek === "tumu" ||
+     (secim.ek === "cozulmemis" && !cevaplar[s.id]) ||
+     (secim.ek === "yanlislar" && yanlisMi(s)) ||
+     (secim.ek === "favoriler" && favoriler.has(s.id))));
+}
+
+// temel: başlatılan liste. liste: soru listesi panelindeki filtre ve sıralamaya göre gezilen görünüm.
+// Görünüm yalnızca filtre/sıralama değişince yeniden kurulur; cevap verdikçe sorular yerinden oynamaz.
+function yeniOturum(o) {
+  const yeni = { i: 0, filtre: "tumu", siralama: "oturum", ...o };
+  yeni.liste = yeni.temel;
+  return yeni;
+}
+function gorunumKur(o) {
+  const simdiki = o.liste[o.i];
+  const l = o.temel.filter(s => o.filtre === "tumu" || (o.filtre === "yanlis" ? yanlisMi(s) : !cevaplar[s.id]));
+  o.liste = o.siralama === "konu" ? l.sort(konuSirasi) : l;  // sort kararlı: konu içinde oturum sırası korunur
+  o.i = Math.max(0, o.liste.indexOf(simdiki));
+}
+function oturumBaslat(liste, dersId, donus, karisik = false, siralama = "oturum", ek = {}) {  // "konu" ise liste konu sırasıyla gelir
+  yigin = [];
+  oturum = yeniOturum({ temel: liste, ders: dersId, donus, karisik, siralama, ...ek });
+  git({ ekran: "soru" });
+}
+
+// Benzer sorular aynı soru ekranında, mevcut oturumun üstüne yeni bir oturum olarak açılır.
+function benzerAc(s, hedefId) {
+  const g = benzerGruplari(s);
+  const liste = [...g.ayni, ...g.benzer, ...g.diger];
+  hedefId ??= (liste.find(x => !cevaplar[x.id]) || liste[0]).id;  // "Benzerleri çöz": ilk çözülmemişten başla
+  yigin.push(oturum);
+  oturum = yeniOturum({ temel: liste, ders: s.ders.id, donus: oturum.donus, kaynak: s });
+  oturum.i = Math.max(0, liste.findIndex(x => x.id === hedefId));
+  ciz(); window.scrollTo(0, 0);
+}
+// Benzer çipine uzun basınca (450 ms) sorunun kökü küçük bir balonda görünür; dokunuşla ya da kaydırmayla kapanır.
+let onizlemeZaman;
+function onizlemeGizle() { clearTimeout(onizlemeZaman); $("#onizleme").hidden = true; }
+function onizlemeBagla(s) {
+  document.querySelectorAll("[data-benzer]").forEach(el => {
+    el.onpointerdown = () => {
+      onizlemeGizle();
+      onizlemeZaman = setTimeout(() => { sonUzunBasma = Date.now(); navigator.vibrate?.(15); onizlemeGoster(el); }, 450);
+    };
+    el.onpointerup = el.onpointercancel = () => clearTimeout(onizlemeZaman);
+    el.onpointerleave = onizlemeGizle;
+    el.oncontextmenu = e => e.preventDefault();
+    el.onclick = () => { if (Date.now() - sonUzunBasma > 700) benzerAc(s, el.dataset.benzer); };
+  });
+}
+function onizlemeGoster(el) {
+  const x = SORULAR[el.dataset.benzer], b = $("#onizleme");
+  b.innerHTML = `<small>${x.ders.kod ? x.ders.kod + " · " : ""}${esc(x.sinav.kunye.replace("/", " "))}</small>${esc(x.kok.length > 180 ? x.kok.slice(0, 180) + "…" : x.kok)}`;
+  b.hidden = false;
+  const r = el.getBoundingClientRect(), w = b.offsetWidth, h = b.offsetHeight;
+  b.style.left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 12)) + "px";
+  b.style.top = (r.top - h - 8 > 70 ? r.top - h - 8 : r.bottom + 8) + "px";
+}
+document.addEventListener("pointerdown", e => { if (!e.target.closest("[data-benzer]")) onizlemeGizle(); });
+addEventListener("scroll", onizlemeGizle, { passive: true });
+
+function benzerKapat() {
+  oturum = yigin.pop();
+  ciz(); window.scrollTo(0, 0);
+}
+
+// ---------- konu seçici (TUSBuddy'deki soru ekranı ünite seçicisi) ----------
+// Oturumun çözülen kümesini bir disipline ya da ders başlığına daraltır; "Tüm konular" geri getirir.
+const kapsamVar = o => MUFREDAT[DERSLER[o.ders]?.kod] && (o.tumTemel || o.temel).some(baslikOf);
+function kapsamPenceresi() {
+  const o = oturum;
+  const tum = o.tumTemel ??= o.temel;
+  const gruplar = {};
+  for (const s of tum) {
+    const b = baslikOf(s);
+    if (!b) continue;
+    const g = gruplar[b.grup] ??= { ad: b.grupAd, n: b.n, sorular: [], basliklar: {} };
+    g.n = Math.min(g.n, b.n); g.sorular.push(s);
+    (g.basliklar[b.id] ??= { b, sorular: [] }).sorular.push(s);
+  }
+  const sec = (ad, liste) => {
+    Object.assign(o, { temel: liste, liste, kapsamAd: ad, i: 0, filtre: "tumu" });
+    if (o.siralama === "konu") gorunumKur(o);
+    pencereKapat(); ciz(); window.scrollTo(0, 0);
+  };
+  pencereAc(`Konu seç<small>${esc(kurulAdi(DERSLER[o.ders]))} · ${tum.length} soru</small>`, () => {
+    $("#pIcerik").innerHTML = `<input class="arama-kutu" id="kapsam-ara" type="search" placeholder="Disiplin ya da ders başlığı ara" autocomplete="off">
+      <div id="kapsam-liste"></div>`;
+    const cizListe = () => {
+      const q = katla($("#kapsam-ara").value.trim());
+      const satir = (anahtar, ad, n, alt = false) => `<button class="baslik-satir${alt ? " alt" : ""}" data-kapsam="${anahtar}"
+        ${o.kapsamAd === ad || (!o.kapsamAd && anahtar === "*") ? 'aria-current="true"' : ""}><span>${ad}</span><span class="n">${n}</span></button>`;
+      let h = q ? "" : satir("*", "Tüm konular", tum.length);
+      for (const [g, x] of Object.entries(gruplar).sort((a, b) => a[1].n - b[1].n)) {
+        const basliklar = Object.values(x.basliklar).sort((a, b) => a.b.n - b.b.n);
+        const grupUyar = !q || katla(x.ad).includes(q);
+        const uyan = q ? basliklar.filter(y => katla(y.b.ad).includes(q)) : [];
+        if (grupUyar) h += satir(`g:${g}`, esc(x.ad), x.sorular.length);
+        h += uyan.map(y => satir(`b:${y.b.id}`, baslikAdi(y.b), y.sorular.length, true)).join("");
+      }
+      $("#kapsam-liste").innerHTML = h || `<div class="bos-durum">Eşleşen konu yok.</div>`;
+      document.querySelectorAll("[data-kapsam]").forEach(el => el.onclick = () => {
+        const [tur, id] = el.dataset.kapsam.split(/:(.*)/);
+        if (tur === "*") return sec(null, tum);
+        if (tur === "g") return sec(gruplar[id].ad, gruplar[id].sorular);
+        const y = Object.values(gruplar).flatMap(x => Object.values(x.basliklar)).find(y => y.b.id === id);
+        sec(y.b.ad, y.sorular);
+      });
+    };
+    $("#kapsam-ara").oninput = cizListe;
+    cizListe();
+  }, true);
+}
+
+function cizDers() {
+  const d = DERSLER[durum.ders];
+  const tum = dersSorulari(d);
+  secim ??= { turler: new Set(Object.keys(TURLER)), sinavlar: new Set(d.sinavlar.map(k => k.sinav.id)), ek: "tumu", karisik: false,
+              acik: new Set() };  // acik: açık duran disiplin kartları
+  ust(kurulAdi(d), `${d.sinif}. Sınıf${d.kod ? " · Komite" : ""}`);
+
+  const dolu = d.sinavlar.filter(k => k.sorular.length);
+  const seciliSinav = dolu.filter(k => secim.sinavlar.has(k.sinav.id) && secim.turler.has(k.sinav.tur));
+  const cozulen = tum.filter(s => cevaplar[s.id]).length;
+  const yuzde = n => (100 * n / tum.length).toFixed(1);
+  const secilen = filtrele(d);
+  const EK = { tumu: "Tüm sorular", cozulmemis: "Çözülmemiş", yanlislar: "Yanlışlarım", favoriler: "Favoriler" };
+
+  // Ayarlar tek satırda hap düğmeler; seçenekler alttan açılan pencerelerde (TUSBuddy'deki global sınav filtresi gibi).
+  // Sayfanın gövdesi konu kartları; "Soruyu Getir" seçime uyan tüm soruları açar.
+  $("#icerik").innerHTML = `
+    <div class="kutu ozet-kart">
+      <div class="ozet-satir"><b>${tum.length}</b><span>soru · ${dolu.length} sınav</span>
+        <span class="sag-yazi">%${Math.round(100 * cozulen / tum.length)} çözüldü</span></div>
+      <div class="cubuk ince"><span class="d" style="width:${yuzde(tum.filter(dogruMu).length)}%"></span><span class="y" style="width:${yuzde(tum.filter(yanlisMi).length)}%"></span></div>
+    </div>
+
+    <div class="filtre-bar">
+      <button class="hap" id="hap-sinav" aria-pressed="${seciliSinav.length !== dolu.length}">${ikon("takvim")}
+        <span>${seciliSinav.length === dolu.length ? "Tüm sınavlar" : `${seciliSinav.length}/${dolu.length} sınav`}</span>${ikon("asagi")}</button>
+      <button class="hap" id="hap-filtre" aria-pressed="${secim.ek !== "tumu"}">${ikon("filtre")}<span>${secim.ek === "tumu" ? "Tümü" : EK[secim.ek]}</span>${ikon("asagi")}</button>
+      <button class="hap" id="hap-karisik" aria-pressed="${secim.karisik}" title="Soru sırasını değiştir">${ikon(secim.karisik ? "karistir" : "liste")}
+        <span>${secim.karisik ? "Karışık" : "Sınav sırası"}</span></button>
+    </div>
+
+    ${konuBolumu(d, secilen)}
+
+    <div class="alt-bar"><button class="dugme" id="getir" ${secilen.length ? "" : "disabled"}>
+      ${secilen.length ? `${secilen.length} Soruyu Getir` : "Seçime uyan soru yok"}</button></div>`;
+
+  $("#hap-sinav").onclick = () => sinavPenceresi(d);
+  $("#hap-filtre").onclick = () => filtrePenceresi(d);
+  $("#hap-karisik").onclick = () => { secim.karisik = !secim.karisik; ciz(); };
+  $("#getir").onclick = () => {
+    let liste = filtrele(d);
+    if (secim.karisik) liste = liste.map(s => [Math.random(), s]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+    oturumBaslat(liste, d.id, durum, secim.karisik);
+  };
+  if ($("#dagilim-ac")) $("#dagilim-ac").onclick = () => dagilimPenceresi(d);
+  document.querySelectorAll("[data-ac]").forEach(el => el.onclick = () => {
+    secim.acik.has(el.dataset.ac) ? secim.acik.delete(el.dataset.ac) : secim.acik.add(el.dataset.ac); ciz();
+  });
+  document.querySelectorAll("[data-baslik]").forEach(el => el.onclick = () =>
+    oturumBaslat(filtrele(d).filter(s => baslikOf(s)?.id === el.dataset.baslik), d.id, durum));
+  document.querySelectorAll("[data-grup-coz]").forEach(el => el.onclick = () =>
+    oturumBaslat(filtrele(d).filter(s => baslikOf(s)?.grup === el.dataset.grupCoz).sort(konuSirasi), d.id, durum, false, "konu"));
+}
+
+// Sınav seçimi penceresi: kısayollar, sınav türleri ve yıl satırları. Her dokunuşta arkadaki sayfa da güncellenir.
+function sinavPenceresi(d) {
+  const yillar = {};
+  for (const k of [...d.sinavlar].filter(k => k.sorular.length).sort((a, b) => b.sinav.tarih.localeCompare(a.sinav.tarih)))
+    (yillar[sinavYili(k.sinav)] ??= []).push(k);
+  const turAdet = t => d.sinavlar.filter(k => k.sinav.tur === t).reduce((a, k) => a + k.sorular.length, 0);
+  pencereAc(`Sınavlar<small>${esc(d.ad)}</small>`, function cizSinavlar() {
+    const secilen = filtrele(d).length;
+    $("#pIcerik").innerHTML = `
+      <div class="kisayollar">
+        <button class="bag" data-kisayol="tumu">Tümü</button>
+        <button class="bag" data-kisayol="1">Son 1 yıl</button>
+        <button class="bag" data-kisayol="3">Son 3 yıl</button>
+        <button class="bag" data-kisayol="hic">Temizle</button>
+      </div>
+      ${Object.keys(TURLER).filter(turAdet).length > 1 ? `<div class="cipler" style="margin-bottom:12px">${Object.entries(TURLER).filter(([t]) => turAdet(t)).map(([t, ad]) =>
+        `<button class="cip" data-tur="${t}" aria-pressed="${secim.turler.has(t)}">${ad} <span class="n">${turAdet(t)}</span></button>`).join("")}</div>` : ""}
+      ${Object.entries(yillar).map(([yil, ks]) => `
+        <div class="yil-satiri"><b>${yil}</b><div class="cipler">${(komiteSinavi(ks[0].sinav) ? [...ks].reverse() : ks).map(k => {  // komitede Vize → Final → Telafi
+          const c = k.sorular.filter(s => cevaplar[s.id]).length;
+          const dc = k.sorular.filter(dogruMu).length;
+          return `<button class="cip" data-sinav="${k.sinav.id}" aria-pressed="${secim.sinavlar.has(k.sinav.id)}" ${secim.turler.has(k.sinav.tur) ? "" : "disabled"}>
+            ${esc(k.sinav.kunye.split("/")[1])}${TUR_ETIKET[k.sinav.tur] && !komiteSinavi(k.sinav) ? " · " + TUR_ETIKET[k.sinav.tur] : ""}
+            <span class="n">${c ? `${c}/${k.sorular.length}` : k.sorular.length}</span>
+            ${c ? `<span class="tamam">%${Math.round(100 * dc / c)}</span>` : ""}</button>`;
+        }).join("")}</div></div>`).join("")}
+      <button class="dugme" id="sinav-tamam" style="margin-top:8px">${secilen ? `${secilen} soru · Tamam` : "Seçime uyan soru yok"}</button>`;
+    const yenile = () => { ciz(); cizSinavlar(); };
+    document.querySelectorAll("[data-tur]").forEach(el => el.onclick = () => {
+      secim.turler.has(el.dataset.tur) ? secim.turler.delete(el.dataset.tur) : secim.turler.add(el.dataset.tur); yenile();
+    });
+    document.querySelectorAll("[data-sinav]").forEach(el => el.onclick = () => {
+      secim.sinavlar.has(el.dataset.sinav) ? secim.sinavlar.delete(el.dataset.sinav) : secim.sinavlar.add(el.dataset.sinav); yenile();
+    });
+    document.querySelectorAll("[data-kisayol]").forEach(el => el.onclick = () => {
+      const k = el.dataset.kisayol;
+      const enSon = Math.max(...d.sinavlar.map(x => +x.sinav.tarih.slice(0, 4)));
+      secim.sinavlar = new Set(d.sinavlar.filter(x =>
+        k === "tumu" || (k !== "hic" && +x.sinav.tarih.slice(0, 4) > enSon - +k)).map(x => x.sinav.id));
+      if (k === "tumu") secim.turler = new Set(Object.keys(TURLER));
+      yenile();
+    });
+    $("#sinav-tamam").onclick = pencereKapat;
+  });
+}
+
+// Filtre penceresi: seçili sınavlar içinde hangi sorular gelsin; sayılar canlı.
+function filtrePenceresi(d) {
+  pencereAc("Hangi sorular?", () => {
+    const eski = secim.ek;
+    const say = ek => { secim.ek = ek; const n = filtrele(d).length; secim.ek = eski; return n; };
+    $("#pIcerik").innerHTML = [["tumu", "Tüm sorular"], ["cozulmemis", "Çözülmemiş"], ["yanlislar", "Yanlışlarım"], ["favoriler", "Favoriler"]]
+      .map(([ek, ad]) => `<button class="baslik-satir" data-ek="${ek}" ${secim.ek === ek ? 'aria-current="true"' : ""}>
+        <span>${ad}</span><span class="n">${say(ek)}</span></button>`).join("");
+    document.querySelectorAll("[data-ek]").forEach(el => el.onclick = () => { secim.ek = el.dataset.ek; pencereKapat(); ciz(); });
+  });
+}
+
+// Etiketli kurulda disiplin kartları ve altında ders başlıkları (TUSBuddy ünite kartları); sayılar seçili sınav ve
+// filtreye göre. Ders başlıkları müfredat sırasıyla; soru almamış başlıklar soluk görünür.
+function konuBolumu(d, liste) {
+  const k = MUFREDAT[d.kod];
+  if (!k) return "";
+  const say = {};
+  for (const s of liste) { const b = baslikOf(s); if (b) (say[b.id] ??= []).push(s); }
+  const tum = Object.values(BASLIKLAR[d.kod]);
+  const gruplar = [...new Set(tum.map(b => b.grup))].map(g => [g, k.gruplar[g], tum.filter(b => b.grup === g), k.agirlik[g]]);
+  gruplar.push(["belirsiz", "Belirsiz", [{ id: "belirsiz", ad: "Metni eksik sorular" }]]);
+  const kartlar = gruplar.map(([g, ad, basliklar, agirlik]) => {
+    const sorular = basliklar.flatMap(b => say[b.id] || []);
+    if (!sorular.length) return "";
+    const c = sorular.filter(s => cevaplar[s.id]).length;
+    const yuzde = n => (100 * n / sorular.length).toFixed(1);
+    const acik = secim.acik.has(g);
+    // Kartın gövdesine dokunmak disiplinin sorularını konu sırasıyla açar; sağdaki ok ders başlıklarını gösterir.
+    return `<div class="kutu disiplin${acik ? " acik" : ""}">
+      <div class="disiplin-ust">
+        <button class="disiplin-coz" data-grup-coz="${g}" aria-label="${esc(ad)} sorularını çöz">
+          <div class="baslik"><span class="ad">${esc(ad)}</span><span class="sayi-rozet">${sorular.length} soru</span></div>
+          <div class="ozet"><span>${basliklar.length} başlık${agirlik != null ? ` · programda %${Math.round(agirlik)}` : ""}</span>
+            <span>${c}/${sorular.length} çözüldü</span></div>
+          <div class="cubuk"><span class="d" style="width:${yuzde(sorular.filter(dogruMu).length)}%"></span><span class="y" style="width:${yuzde(sorular.filter(yanlisMi).length)}%"></span></div>
+        </button>
+        <button class="disiplin-ac" data-ac="${g}" aria-expanded="${acik}" aria-label="Ders başlıklarını ${acik ? "gizle" : "göster"}">${ikon("asagi")}</button>
+      </div>
+      ${acik ? basliklar.map(b => {
+        const l = say[b.id] || [], n = l.length;
+        const bc = l.filter(s => cevaplar[s.id]).length;
+        return `<button class="baslik-satir" data-baslik="${b.id}" ${n ? "" : "disabled"}>
+          <span class="baslik-ad">${baslikAdi(b)}${bc ? `<span class="mini-cubuk"><span class="d" style="width:${100 * l.filter(dogruMu).length / n}%"></span><span class="y" style="width:${100 * l.filter(yanlisMi).length / n}%"></span></span>` : ""}</span>
+          <span class="n">${n}</span></button>`;
+      }).join("") : ""}
+    </div>`;
+  }).join("");
+  const tahmini = liste.some(s => s.etiket && s.etiket.durum !== "onayli");
+  return kartlar && `<div class="bolum-satir"><h2>Konular <small>· seçili sınavlardan${tahmini ? ", tahmini" : ""}</small></h2>
+      <button class="bag" id="dagilim-ac">${ikon("grafik")}Dağılım</button></div>
+    ${kartlar}`;
+}
+
+// Çıkmış Soru Dağılımı (TUSBuddy şablonu): seçili sınavlardaki soruların disiplin › ders başlığı sayıları ya da sınav
+// başına ortalaması; disiplin satırında çıkmış soru payı ile ders programındaki ağırlık yan yana.
+function dagilimPenceresi(d) {
+  const k = MUFREDAT[d.kod];
+  const sinavlar = d.sinavlar.filter(x => secim.turler.has(x.sinav.tur) && secim.sinavlar.has(x.sinav.id) && x.sorular.length);
+  const gruplar = {};
+  for (const s of sinavlar.flatMap(x => x.sorular)) {
+    const b = baslikOf(s);
+    if (!b || b.id === "belirsiz") continue;
+    const g = gruplar[b.grup] ??= { ad: b.grupAd, n: b.n, toplam: 0, basliklar: {} };
+    g.n = Math.min(g.n, b.n); g.toplam++;
+    (g.basliklar[b.id] ??= { b, sayi: 0 }).sayi++;
+  }
+  const toplam = Object.values(gruplar).reduce((a, g) => a + g.toplam, 0);
+  let mod = "tum";
+  pencereAc(`Çıkmış Soru Dağılımı<small>${esc(d.ad)} · ${sinavlar.length} sınav · ${toplam} soru</small>`, function cizDagilim() {
+    const deger = n => mod === "tum" ? n
+      : (n / sinavlar.length).toLocaleString("tr", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    $("#pIcerik").innerHTML = !toplam ? `<div class="bos-durum">Seçili sınavlarda etiketli soru yok.</div>` : `
+      <div class="bolmeli">${[["tum", "Tüm Sorular"], ["ort", "Sınav Ortalaması"]].map(([m, ad]) =>
+        `<button data-dmod="${m}" aria-pressed="${mod === m}">${ad}</button>`).join("")}</div>
+      <div class="bilgi">${mod === "tum" ? `Seçili ${sinavlar.length} sınavda çıkan soru sayıları.`
+        : `Bir sınavda ortalama kaç soru çıktığı (seçili ${sinavlar.length} sınav).`} Disiplin satırında çıkmış soru payı ve ders programındaki ağırlık.</div>
+      ${Object.entries(gruplar).sort((a, b) => a[1].n - b[1].n).map(([g, x]) => `
+        <div class="dagilim-grup">
+          <div class="dagilim-baslik"><span><b>${esc(x.ad)}</b><small>%${Math.round(100 * x.toplam / toplam)} çıktı${
+            k.agirlik[g] != null ? ` · programda %${Math.round(k.agirlik[g])}` : ""}</small></span><span class="sayi-rozet">${deger(x.toplam)}</span></div>
+          ${Object.values(x.basliklar).sort((a, b) => a.b.n - b.b.n).map(y =>
+            `<div class="dagilim-satir"><span>${baslikAdi(y.b)}</span><span class="n">${deger(y.sayi)}</span></div>`).join("")}
+        </div>`).join("")}`;
+    document.querySelectorAll("[data-dmod]").forEach(el => el.onclick = () => { mod = el.dataset.dmod; cizDagilim(); });
+  }, true);
+}
+
+// ---------- soru ekranı ----------
+function vurgula(metin, vurgular) {
+  let h = esc(metin);
+  for (const v of vurgular || []) h = h.replace(esc(v), `<u>${esc(v)}</u>`);
+  return h;
+}
+
+function aciklamaHtml(s, cevap) {
+  const a = s.aciklama;
+  if (typeof a === "string") return `<p class="gerekce">${kalin(a)}</p>`;  // eski düz metin biçimi
+  return `<p class="gerekce">${kalin(a.gerekce)}</p>
+    ${a.secenekler && Object.keys(a.secenekler).length ? `
+    <div class="alt-baslik">Diğer seçenekleri inceleyelim</div>
+    ${Object.entries(a.secenekler).sort().map(([h, m]) =>
+      `<div class="sik-aciklama ${h === cevap ? "secilen" : ""}"><span class="harf">${h})</span><span>${kalin(m)}</span></div>`).join("")}` : ""}
+    ${a.ipucu ? `<div class="ipucu">${ikon("ampul")}<div><b>İpucu: </b>${kalin(a.ipucu)}</div></div>` : ""}`;
+}
+
+function bildirPenceresi(s) {
+  const f = { neden: null, oneri: null, not: "" };
+  pencereAc(`Hata Bildir<small>${s.kisa} · ${esc(s.ders.ad)} ${esc(s.sinav.kunye)}</small>`, function cizBildir() {
+    $("#pIcerik").innerHTML = `
+      <div class="etiket">Sorun ne?</div>
+      <div class="cipler">${BILDIRIM_NEDENLERI.map(n => `<button class="cip" data-neden="${n}" aria-pressed="${f.neden === n}">${n}</button>`).join("")}</div>
+      ${f.neden === "Cevap yanlış" ? `<div class="etiket" style="margin-top:14px">Sence doğrusu hangisi?</div>
+        <div class="cipler">${Object.keys(s.secenekler).map(h => `<button class="cip" data-oneri="${h}" aria-pressed="${f.oneri === h}">${h}</button>`).join("")}</div>` : ""}
+      <textarea id="bildir-not" placeholder="Kısa bir açıklama (isteğe bağlı), örn. kaynak kitap/sayfa">${esc(f.not)}</textarea>
+      <div class="sag"><button class="dugme kucuk" id="bildir-gonder" ${f.neden ? "" : "disabled"}>Gönder</button></div>`;
+    $("#bildir-not").oninput = e => { f.not = e.target.value; };
+    document.querySelectorAll("[data-neden]").forEach(el => el.onclick = () => { f.neden = el.dataset.neden; cizBildir(); });
+    document.querySelectorAll("[data-oneri]").forEach(el => el.onclick = () => { f.oneri = el.dataset.oneri; cizBildir(); });
+    $("#bildir-gonder").onclick = () => {
+      bildirimler.push({ soru: s.id, neden: f.neden, oneri: f.oneri, not: f.not.trim(), tarih: new Date().toISOString() });
+      yaz("csh-bildirimler", bildirimler);
+      pencereKapat(); toast("Teşekkürler, bildiriminiz alındı.");
+    };
+  });
+}
+
+function cizSoru() {
+  const s = oturum.liste[oturum.i];
+  const cevap = cevaplar[s.id];
+  const sonIndeks = oturum.liste.length - 1;
+  const kaynak = oturum.kaynak;  // benzer sorular katmanındaysak katmanı açan soru
+  if (kaynak) ust("Benzer Çıkmış Sorular", `${kaynak.kisa} sorusuna benzer · ${oturum.temel.length} soru`);
+  else {
+    yaz("csh-son-oturum", { ders: oturum.ders, idler: oturum.temel.map(x => x.id), i: oturum.temel.indexOf(s) });
+    ust(kurulAdi(s.ders), `${s.sinav.kunye} · ${sinavAdi(s.sinav)}`);
+  }
+
+  const secenekSinifi = h => {
+    if (!cevap) return "";
+    if (s.dogru) return h === s.dogru ? "dogru" : h === cevap ? "yanlis" : "";
+    return h === cevap ? "secili" : "";
+  };
+  const harfIcerik = h => {
+    const c = secenekSinifi(h);
+    return c === "dogru" ? ikon("tik") : c === "yanlis" ? ikon("carpi") : h;
+  };
+  const sonucD = cevap && s.dogru ? cevap === s.dogru : null;
+  const sonuc = sonucD === null ? "" :
+    `<span class="sonuc ${sonucD ? "d" : "y"}">${ikon(sonucD ? "tik" : "carpi")}${sonucD ? "Doğru" : "Yanlış"}</span>`;
+  const oy = oylar[s.id];
+  // Elenen şıklar yalnız oturum boyunca tutulur (TUSBuddy'de de sunucuya gitmez)
+  const elenen = (oturum.elenen ??= {})[s.id] ??= new Set();
+
+  // Benzer çıkmış sorular cevaptan sonra görünür: üç grup, her grupta tek satır kaydırılan çipler (en yeni sınav önce);
+  // çipte durum işareti (✓ doğru, ✕ yanlış, ○ çözülmedi). Uzun basma soruyu önizler; "Benzerleri çöz" hepsini açar.
+  const bg = benzerGruplari(s);
+  const benzerSay = bg.ayni.length + bg.benzer.length + bg.diger.length;
+  const benzerGrup = (ad, l, kod) => !l.length ? "" : `
+    <div class="benzer-grup"><div class="benzer-etiket">${ad} <span>· ${l.length}</span></div>
+      <div class="cipler tek-satir">${l.map(x => `<button class="cip kucuk" data-benzer="${esc(x.id)}" title="${esc(x.kok.slice(0, 160))}">
+        ${durumIkon(x)}${kod && x.ders.kod ? `<span class="kod">${x.ders.kod}</span>` : ""}${esc(x.sinav.kunye.replace("/", " "))}</button>`).join("")}</div></div>`;
+  const benzerHtml = !cevap || !benzerSay ? "" : `
+    <div class="benzer">
+      ${benzerGrup("Aynı soru, başka yıllarda", bg.ayni)}
+      ${benzerGrup("Benzer konuda", bg.benzer)}
+      ${benzerGrup("Başka kurullarda", bg.diger, true)}
+      <button class="dugme ikincil benzer-coz" id="benzer-coz">Benzerleri çöz (${benzerSay})${ikon("sag")}</button>
+    </div>`;
+  const tekrar = tekrarSayisi(s);
+
+  $("#icerik").innerHTML = `
+    ${kaynak ? `<div class="katman">${ikon("kopya")}<b>${kaynak.kisa} sorusunun benzerleri${yigin.length > 1 ? ` · ${yigin.length}. katman` : ""}</b>
+      <button class="bag" id="katman-kapat">Kapat</button></div>` : ""}
+    ${!kaynak && kapsamVar(oturum) ? `<button class="secici" id="kapsam-ac" aria-label="Konu seç">${ikon("kitap")}
+      <span>${esc(oturum.kapsamAd || "Tüm konular")}</span><span class="sayi-rozet">${oturum.temel.length} soru</span>${ikon("asagi")}</button>` : ""}
+    <div class="kutu" id="soru-karti">
+      <div class="soru-ust"><span class="kaynak">${konuKisa(s)}</span>
+        <span class="kunye">${tekrar > 1 ? `<span class="tekrar" title="Bu soru ya da neredeyse aynısı ${tekrar} farklı sınavda soruldu">${ikon("yenile")}${tekrar} kez çıktı</span>` : ""}${s.ders.id !== oturum.ders && s.ders.kod ? `${s.ders.kod} · ` : ""}${esc(s.sinav.kunye.replace("/", " "))}</span></div>
+      <p class="kok">${s.no}) ${vurgula(s.kok, s.vurgu)}</p>
+      ${s.onculler ? `<ol class="onculler">${s.onculler.map((o, i) => `<li><span class="rakam">${s.oncul_stil === "rakam" ? i + 1 : ROMA[i]}.</span><span class="oncul">${esc(o)}</span></li>`).join("")}</ol>` : ""}
+      ${(s.gorseller || []).map(g => `<img class="soru-gorsel" src="${GORSEL_KOK}${esc(g)}" alt="Soru görseli" loading="lazy">`).join("")}
+      ${Object.entries(s.secenekler).map(([h, m]) =>
+        `<button class="secenek ${secenekSinifi(h)}${elenen.has(h) ? " elenmis" : ""}" data-harf="${h}"><span class="harf">${harfIcerik(h)}</span><span class="metin">${esc(m)}</span>
+          ${cevap ? "" : `<span class="ele" data-ele aria-label="${h} şıkkını ${elenen.has(h) ? "geri getir" : "ele"}" title="${elenen.has(h) ? "Geri getir" : "Şıkkı ele"}">${ikon(elenen.has(h) ? "geriAl" : "ele")}</span>`}</button>`).join("")}
+      ${!cevap && !oku("csh-eleme-goruldu", false) ? `<div class="eleme-ipucu">Emin olmadığın şıkları elemek için sağdaki simgeye dokun ya da şıkka uzun bas.</div>` : ""}
+      <div class="soru-bilgi"><span>${sonuc}</span><span class="id">${s.kisa}</span></div>
+      ${benzerHtml}
+      ${cevap && !s.dogru ? `<div class="bilgi">Bu sınavın cevap anahtarı henüz eklenmedi. Seçiminiz kaydedildi.</div>` : ""}
+      ${cevap && s.dogru_kaynak === "ai" && !s.aciklama ? `<div class="bilgi">Bu sorunun resmî cevap anahtarı yok; cevap yapay zekâ tarafından bulundu ve henüz doğrulanmadı.</div>` : ""}
+      <div class="aksiyonlar">
+        <button id="favori" aria-pressed="${favoriler.has(s.id)}">${ikon("yildiz")}Favori</button>
+        <button id="geri-al" ${cevap ? "" : "disabled"}>${ikon("geriAl")}Geri al</button>
+        <button id="bildir-ac" class="bildir">${ikon("bayrak")}Bildir</button>
+      </div>
+    </div>
+    ${cevap && s.dogru && s.aciklama ? `
+    <div class="kutu">
+      <div class="bolum-baslik"><span class="bolum-ikon">${ikon("ampul")}</span>Açıklama
+        ${aiAciklama(s) ? `<button class="ai-rozet" id="ai-rozet">${ikon("bilgi")}AI · doğrulanmamış</button>` : ""}</div>
+      ${oturum.aiAcik ? `<div class="ai-bilgi">${s.dogru_kaynak === "ai" ? "Bu cevap ve açıklama" : "Bu açıklama (cevap resmî anahtardan)"} yapay zekâ tarafından hazırlandı, henüz bir hoca veya editör tarafından doğrulanmadı. Hatalı olduğunu düşünüyorsanız soru kartındaki <b>Bildir</b> ile haber verin.</div>` : ""}
+      ${aciklamaHtml(s, cevap)}
+    </div>
+    <div class="kutu">
+      <div class="fayda"><span>Açıklama faydalı mıydı?</span>
+        <button data-oy="iyi" aria-pressed="${oy?.oy === "iyi"}" aria-label="Faydalı">${ikon("begen")}</button>
+        <button data-oy="kotu" aria-pressed="${oy?.oy === "kotu"}" aria-label="Faydalı değil">${ikon("begenme")}</button></div>
+      ${oy?.oy === "kotu" && !oy.yorumGonderildi ? `
+        <textarea id="oy-yorum" placeholder="Neyi eksik ya da hatalı buldun? (isteğe bağlı)">${esc(oturum.oyYorum || "")}</textarea>
+        <div class="sag"><button class="dugme kucuk" id="oy-gonder">Gönder</button></div>` : ""}
+    </div>` : ""}`;
+
+  $("#gezinme").innerHTML = `<div class="ic">
+    <button class="onceki" id="onceki" ${oturum.i === 0 ? "disabled" : ""}>${ikon("sol")}Önceki</button>
+    <button class="konum" id="konum" aria-label="Soru listesini aç">${oturum.i + 1} / ${oturum.liste.length}
+      <small>${ikon("liste")}${{ tumu: `${oturum.liste.filter(x => cevaplar[x.id]).length} cevaplandı`, yanlis: "Yanlışlar", bos: "Boşlar" }[oturum.filtre]}${oturum.siralama === "konu" ? " · konuya göre" : ""}</small></button>
+    <button class="sonraki" id="sonraki">${oturum.i < sonIndeks ? "Sonraki" : kaynak ? "Kapat" : "Bitir"}${ikon("sag")}</button>
+  </div>`;
+
+  const eleDegistir = h => {
+    elenen.has(h) ? elenen.delete(h) : elenen.add(h);
+    yaz("csh-eleme-goruldu", true); ciz();
+  };
+  document.querySelectorAll("[data-harf]").forEach(el => {
+    const h = el.dataset.harf;
+    let zaman;
+    // Uzun basma: 450 ms basılı tutunca şık elenir. Kaydırmaya başlanırsa (pointercancel) iptal olur.
+    el.onpointerdown = () => {
+      if (cevap) return;
+      zaman = setTimeout(() => { sonUzunBasma = Date.now(); navigator.vibrate?.(15); eleDegistir(h); }, 450);
+    };
+    el.onpointerup = el.onpointerleave = el.onpointercancel = () => clearTimeout(zaman);
+    el.oncontextmenu = e => { if (!cevap) e.preventDefault(); };
+    el.onclick = e => {
+      if (Date.now() - sonUzunBasma < 700) return;  // uzun basmanın ardından gelen tıklama cevap sayılmaz
+      if (!cevap && (e.target.closest("[data-ele]") || elenen.has(h))) return eleDegistir(h);  // elenmiş şıkka dokunmak geri getirir
+      if (cevaplar[s.id] && s.dogru) return;  // anahtar varsa cevap kilitlenir
+      cevaplar[s.id] = h; yaz("csh-cevaplar", cevaplar); ciz();
+    };
+  });
+  $("#favori").onclick = () => {
+    const ekle = !favoriler.has(s.id);
+    ekle ? favoriler.add(s.id) : favoriler.delete(s.id);
+    yaz("csh-favoriler", [...favoriler]); ciz(); toast(ekle ? "Favorilere eklendi" : "Favorilerden çıkarıldı");
+  };
+  $("#geri-al").onclick = () => { delete cevaplar[s.id]; yaz("csh-cevaplar", cevaplar); ciz(); };
+  if ($("#kapsam-ac")) $("#kapsam-ac").onclick = kapsamPenceresi;
+  $("#bildir-ac").onclick = () => bildirPenceresi(s);
+  onizlemeBagla(s);
+  if ($("#benzer-coz")) $("#benzer-coz").onclick = () => benzerAc(s);
+  if (kaynak) $("#katman-kapat").onclick = benzerKapat;
+  $("#konum").onclick = $("#listeAc").onclick = listePaneli;
+  if ($("#ai-rozet")) $("#ai-rozet").onclick = () => { oturum.aiAcik = !oturum.aiAcik; ciz(); };
+
+  document.querySelectorAll("[data-oy]").forEach(el => el.onclick = () => {
+    oylar[s.id] = { oy: el.dataset.oy };
+    yaz("csh-oylar", oylar); ciz();
+    if (el.dataset.oy === "iyi") toast("Teşekkürler!");
+  });
+  if ($("#oy-yorum")) $("#oy-yorum").oninput = e => { oturum.oyYorum = e.target.value; };
+  if ($("#oy-gonder")) $("#oy-gonder").onclick = () => {
+    oylar[s.id] = { ...oylar[s.id], yorum: $("#oy-yorum").value.trim(), yorumGonderildi: true };
+    yaz("csh-oylar", oylar); ciz(); toast("Geri bildiriminiz alındı.");
+  };
+
+  const adim = n => {
+    oturum.i = Math.min(Math.max(oturum.i + n, 0), sonIndeks);
+    Object.assign(oturum, { aiAcik: false, oyYorum: "" });
+    ciz(); window.scrollTo(0, 0);
+  };
+  $("#onceki").onclick = () => adim(-1);
+  $("#sonraki").onclick = () => {
+    if (oturum.i < sonIndeks) return adim(1);
+    if (kaynak) return benzerKapat();
+    yaz("csh-son-oturum", null);
+    git({ ekran: "ozet", kaynakSekme: sekmeOf(oturum.donus.ekran) });
+  };
+
+  // Yatay kaydırma ile soru değiştirme
+  let x0 = null;
+  const kart = $("#soru-karti");
+  kart.ontouchstart = e => { x0 = e.touches[0].clientX; };
+  kart.ontouchend = e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 60) adim(dx < 0 ? 1 : -1);
+  };
+}
+
+// ---------- soru listesi paneli ----------
+// Filtre (Tümü/Yanlış/Boş) Önceki/Sonraki ile gezilen kümeyi belirler; Konu sırası soruları konu başlıkları altında toplar.
+function listePaneli() {
+  const o = oturum;
+  pencereAc(`Sorular<small>${o.kaynak ? `${o.kaynak.kisa} sorusunun benzerleri` : esc(kurulAdi(DERSLER[o.ders]))}</small>`, function cizListe() {
+    const adet = { tumu: o.temel.length, yanlis: o.temel.filter(yanlisMi).length, bos: o.temel.filter(x => !cevaplar[x.id]).length };
+    let grup = null, altGrup = null;
+    $("#pIcerik").innerHTML = `
+      <div class="panel-ust">
+        <div class="bolmeli">${[["tumu", "Tümü"], ["yanlis", "Yanlış"], ["bos", "Boş"]].map(([f, ad]) =>
+          `<button data-filtre="${f}" aria-pressed="${o.filtre === f}" ${adet[f] ? "" : "disabled"}>${ad} (${adet[f]})</button>`).join("")}</div>
+        <div class="bolmeli">${[["oturum", o.karisik ? "Karışık" : "Sınav sırası"], ["konu", "Konu sırası"]].map(([k, ad]) =>
+          `<button data-siralama="${k}" aria-pressed="${o.siralama === k}">${ad}</button>`).join("")}</div>
+      </div>
+      ${o.liste.map((x, k) => {
+        let baslik = "";
+        if (o.siralama === "konu") {  // etiketli sorularda iki seviye: disiplin › ders başlığı
+          if (konuAdi(x) !== grup) {
+            grup = konuAdi(x); altGrup = null;
+            baslik = `<div class="grup-baslik"><span>${esc(grup)}</span><span>${o.liste.filter(y => konuAdi(y) === grup).length}</span></div>`;
+          }
+          const b = baslikOf(x);
+          if (b && b.id !== altGrup) {
+            altGrup = b.id;
+            baslik += `<div class="alt-grup-baslik"><span>${baslikAdi(b)}</span><span>${o.liste.filter(y => baslikOf(y)?.id === b.id).length}</span></div>`;
+          }
+        }
+        const c = cevaplar[x.id];
+        const rozet = c && x.dogru ?`<span class="sonuc ${dogruMu(x) ? "d" : "y"}">${dogruMu(x) ? "Doğru" : "Yanlış"}</span>` : c ? "İşaretli" : "";
+        return `${baslik}<button class="liste-satir${k === o.i ? " aktif" : ""}" data-git="${k}">
+          <span class="no">${k + 1}</span>
+          <span class="govde"><span class="kok-kisa">${esc(x.kok)}</span>
+            <span class="alt"><span>${esc(x.sinav.kunye)}${x.ders.id !== o.ders ? ` · ${esc(x.ders.ad)}` : ""}${favoriler.has(x.id) ? " · ★" : ""}</span>${rozet}</span></span>
+        </button>`;
+      }).join("")}`;
+
+    document.querySelectorAll("[data-filtre]").forEach(el => el.onclick = () => { o.filtre = el.dataset.filtre; gorunumKur(o); ciz(); cizListe(); });
+    document.querySelectorAll("[data-siralama]").forEach(el => el.onclick = () => { o.siralama = el.dataset.siralama; gorunumKur(o); ciz(); cizListe(); });
+    document.querySelectorAll("[data-git]").forEach(el => el.onclick = () => {
+      o.i = +el.dataset.git; pencereKapat(); ciz(); window.scrollTo(0, 0);
+    });
+    const aktif = $("#pIcerik .aktif"), kutu = $("#pIcerik");  // yalnız paneli kaydır, sayfayı değil
+    if (aktif) kutu.scrollTop = aktif.offsetTop - kutu.offsetTop - kutu.clientHeight / 2;
+  }, true);
+}
+
+// ---------- ayarlar ----------
+// Pencere alttan açılır; sayfa üstte görünür kaldığı için her seçim anında önizlenir.
+function ayarlarPenceresi() {
+  pencereAc("Ayarlar<small>Bu cihazda saklanır</small>", function cizAyarlar() {
+    const bolmeli = (ad, secenekler, deger) => `<div class="bolmeli">${secenekler.map(([d, etiket]) =>
+      `<button data-${ad}="${d}" aria-pressed="${d === deger}">${etiket}</button>`).join("")}</div>`;
+    $("#pIcerik").innerHTML = `
+      <div class="etiket">Yazı boyutu <small>· soru, şık ve açıklama metni</small></div>
+      <div class="bolmeli olcekler">${OLCEKLER.map(o => `<button data-olcek="${o}" aria-pressed="${o === olcek}"
+        aria-label="Yüzde ${Math.round(o * 100)}" style="font-size:${Math.round(16 * o)}px">A</button>`).join("")}</div>
+      <div class="etiket" style="margin-top:16px">Tema</div>
+      ${bolmeli("tema", [["otomatik", "Otomatik"], ["acik", "Açık"], ["koyu", "Koyu"]], tema)}
+      <div class="etiket" style="margin-top:16px">Görünüm</div>
+      ${bolmeli("gorunum", [["standart", "Standart"], ["ekitap", "E-kitap"]], gorunum)}
+      <p class="ayar-not">E-kitap, zemini kitap sayfası tonuna çevirir; uzun okumada gözü daha az yorar.</p>`;
+    document.querySelectorAll("[data-olcek]").forEach(el => el.onclick = () => {
+      olcek = +el.dataset.olcek; yaz("csh-yazi-olcek", olcek); olcekUygula(); cizAyarlar();
+    });
+    document.querySelectorAll("#pIcerik [data-tema]").forEach(el => el.onclick = () => {
+      tema = el.dataset.tema; yaz("csh-tema", tema); gorunumUygula(); cizAyarlar();
+    });
+    document.querySelectorAll("#pIcerik [data-gorunum]").forEach(el => el.onclick = () => {
+      gorunum = el.dataset.gorunum; yaz("csh-gorunum", gorunum); gorunumUygula(); cizAyarlar();
+    });
+  });
+}
+
+// ---------- oturum sonu ----------
+function cizOzet() {
+  const d = DERSLER[oturum.ders];
+  const liste = oturum.temel;
+  const dogrular = liste.filter(dogruMu);
+  const yanlislar = liste.filter(yanlisMi);
+  const bos = liste.filter(s => !cevaplar[s.id]);
+  const yuzde = Math.round(100 * dogrular.length / liste.length);
+  ust("Oturum Sonucu", kurulAdi(d));
+
+  $("#icerik").innerHTML = `
+    <div class="kahraman ortali"><p>${liste.length} sorunun</p><div class="yuzde">%${yuzde}</div><p>doğru cevaplandı</p></div>
+    <div class="sayilar uc">
+      <div class="sayi d">${ikon("tik")}<b>${dogrular.length}</b><span>doğru</span></div>
+      <div class="sayi y">${ikon("carpi")}<b>${yanlislar.length}</b><span>yanlış</span></div>
+      <div class="sayi b">${ikon("bos")}<b>${bos.length}</b><span>boş</span></div>
+    </div>
+    <div class="dugmeler">
+      <button class="dugme" id="yanlislari-coz" ${yanlislar.length ? "" : "disabled"}>${yanlislar.length ? `Yanlışları tekrar çöz (${yanlislar.length})` : "Yanlış yok"}</button>
+      ${bos.length ? `<button class="dugme ikincil" id="boslari-coz">Boş kalanları çöz (${bos.length})</button>` : ""}
+      <button class="dugme ikincil" id="derse-don">Derse dön</button>
+    </div>`;
+
+  // Tekrar çözülecek sorularda eski cevap silinir ki soru boş açılsın
+  const donus = oturum.donus;
+  if (yanlislar.length) $("#yanlislari-coz").onclick = () => {
+    for (const s of yanlislar) delete cevaplar[s.id];
+    yaz("csh-cevaplar", cevaplar);
+    oturumBaslat(yanlislar, d.id, donus);
+  };
+  if ($("#boslari-coz")) $("#boslari-coz").onclick = () => oturumBaslat(bos, d.id, donus);
+  $("#derse-don").onclick = () => { secim = null; git({ ekran: "ders", ders: d.id, donus: { ekran: "dersler" } }); };
+}
+
+ciz();
+// PWA: telefona "uygulama gibi" kurulabilsin, çevrimdışı da açılsın (bkz. sw.js)
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
