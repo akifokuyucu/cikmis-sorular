@@ -55,6 +55,9 @@
     --zemin: #1b1712; --kart: #262019; --cizgi: #3a3226; --kara: #302920; --yazi: #ede3cf; --soluk: #b5a88f;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* Mobil: yazı boyutu kendiliğinden büyümesin; düğmelerde çift dokunuş yakınlaştırmasın */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  button, a, summary, img.soru-gorsel { touch-action: manipulation; }
   body { margin: 0; background: var(--zemin); color: var(--yazi); padding-bottom: calc(76px + var(--alt-bosluk));
          font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
   body.kilitli { overflow: hidden; }
@@ -85,7 +88,8 @@
   .ust-dugme svg { width: 22px; height: 22px; }
   .ust-dugme:active { background: rgba(255, 255, 255, .25); }
   .marka span { min-width: 0; }
-  .marka b { display: block; font-size: 18px; line-height: 1.2; letter-spacing: -.01em; }
+  .marka b { display: block; font-size: 18px; line-height: 1.2; letter-spacing: -.01em;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .marka small { display: block; font-size: 12.5px; color: rgba(255, 255, 255, .82); white-space: nowrap;
                  overflow: hidden; text-overflow: ellipsis; }
 
@@ -166,6 +170,18 @@
   .devam .cubuk { margin-top: 6px; background: rgba(255, 255, 255, .2); }
   .devam .cubuk .d { background: #fff; }
   .tum-kurullar { width: 100%; text-align: left; margin-top: 4px; }
+  /* Uygulama olarak ekle kartı ve adımlar */
+  .yukle-kart { position: relative; display: flex; align-items: center; gap: 12px; padding-right: 36px; }
+  .yukle-kart img { flex: none; width: 44px; height: 44px; border-radius: 50%; }
+  .yukle-kart .metin { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .yukle-kart small { color: var(--soluk); font-size: 13px; }
+  .yukle-kart .gizle { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border: 0; border-radius: 50%;
+                       background: none; color: var(--soluk); font-size: 20px; }
+  .adimlar { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 12px; }
+  .adimlar li { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+  .adim-no { flex: none; width: 22px; font-weight: 800; color: var(--bordo-yazi); text-align: center; }
+  .yukle-ayar { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .bilgi svg { width: 15px; height: 15px; vertical-align: -3px; }
   .tum-kurullar .metin { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .tum-kurullar > svg { color: var(--soluk); }
 
@@ -208,13 +224,21 @@
                white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Soru kartı */
-  .soru-ust { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 8px; }
-  .soru-ust .kaynak { color: var(--bordo-yazi); font-weight: 700; min-width: 0; }
-  .soru-ust .kunye { color: var(--soluk); font-weight: 600; flex: none; white-space: nowrap; }
+  /* Soru kartının üstünde yalnız sınav ve tekrar rozeti; konu (ipucu vermesin diye) cevaptan sonra altta görünür */
+  .soru-ust { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; }
+  .soru-ust .kunye { color: var(--bordo-yazi); font-weight: 700; white-space: nowrap; }
+  .soru-bilgi .konu-alt { min-width: 0; color: var(--soluk); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tahmini { text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
   .kok { font-weight: 600; white-space: pre-line; margin: 0 0 10px; }
   .kok u { text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
-  .soru-gorsel { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 12px; border-radius: 8px; background: #fff; }
+  .soru-gorsel { display: block; max-width: 100%; max-height: 320px; margin: 0 auto 12px; border-radius: 8px; background: #fff;
+                 cursor: zoom-in; }
+  /* Görsel büyüteci: dokununca tam ekran; iki parmakla büyütülür, dokunuşla ya da ✕ ile kapanır */
+  .buyutec { position: fixed; inset: 0; z-index: 50; background: rgba(10, 6, 6, .92); overflow: auto; touch-action: pinch-zoom pan-x pan-y;
+             display: flex; align-items: center; justify-content: center; padding: calc(56px + env(safe-area-inset-top)) 8px 24px; }
+  .buyutec img { max-width: 100%; max-height: 100%; border-radius: 6px; background: #fff; }
+  .buyutec button { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px; border: 0;
+                    border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; font-size: 24px; }
   /* --olcek: soru ve açıklama metninin yazı boyutu (Aa düğmesi); meta satırları sabit kalır */
   .kok, .onculler, .gerekce { font-size: calc(16px * var(--olcek, 1)); }
   .onculler { list-style: none; padding: 0; margin: 0 0 12px; }
@@ -272,7 +296,7 @@
   .durum.i { color: var(--bordo-yazi); } .durum.i svg { fill: currentColor; }
   .benzer-coz { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 11px; font-size: 15px; }
   /* "4 kez çıktı" rozeti: soru kartının üst satırında, cevaptan önce de görünür */
-  .tekrar { display: inline-flex; align-items: center; gap: 3px; margin-right: 6px; padding: 1px 8px; border-radius: 999px;
+  .tekrar { flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px;
             background: var(--vurgu); color: var(--vurgu-yazi); font-size: 12px; font-weight: 700; vertical-align: 1px; }
   .tekrar svg { width: 12px; height: 12px; stroke-width: 2.5; }
   .onizleme { position: fixed; z-index: 45; width: max-content; max-width: min(320px, calc(100vw - 24px)); padding: 10px 12px;
@@ -340,7 +364,7 @@
   .fayda button svg { width: 20px; height: 20px; }
   .fayda button[aria-pressed="true"] { border-color: var(--bordo); background: var(--bordo); color: #fff; }
   textarea { width: 100%; min-height: 64px; border: 1.5px solid var(--cizgi); border-radius: 12px; padding: 10px 12px;
-             background: var(--kart); font-size: 14px; resize: vertical; margin-top: 10px; }
+             background: var(--kart); font-size: 16px; resize: vertical; margin-top: 10px; }
   textarea:focus { outline: none; border-color: var(--bordo-yazi); box-shadow: 0 0 0 3px var(--bordo-zemin); }
   .sag { display: flex; justify-content: flex-end; margin-top: 10px; }
 
@@ -380,7 +404,8 @@
              padding-bottom: var(--alt-bosluk); transform: translateY(100%); transition: transform .22s ease-out;
              box-shadow: 0 -8px 30px rgba(0, 0, 0, .2); }
   .pencere.acik { transform: none; }
-  .pencere.uzun { height: 85vh; }  /* filtre değişince düğmeler yerinde kalsın */
+  .pencere.uzun { height: 85vh; height: 85dvh; }  /* filtre değişince düğmeler yerinde kalsın */
+  @supports (height: 1dvh) { .pencere { max-height: 85dvh; } }  /* mobil tarayıcı çubuğu açıkken de sığsın */
   .pencere .tutamac { width: 40px; height: 5px; border-radius: 3px; background: var(--cizgi); margin: 8px auto 0; }
   .pencere header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; }
   .pencere h3 { margin: 0; font-size: 18px; }
@@ -403,7 +428,7 @@
   .baslik-satir[aria-current="true"] { color: var(--bordo-yazi); font-weight: 700; background: var(--bordo-zemin); }
   .baslik-satir.alt { padding-left: 32px; font-size: 13.5px; }
   .arama-kutu { width: 100%; height: 44px; padding: 0 14px; margin-bottom: 8px; border: 1.5px solid var(--cizgi); border-radius: 12px;
-                background: var(--kart); font-size: 15px; }
+                background: var(--kart); font-size: 16px; }
   .arama-kutu:focus { outline: none; border-color: var(--bordo-yazi); box-shadow: 0 0 0 3px var(--bordo-zemin); }
 
   /* Çıkmış Soru Dağılımı */
@@ -490,6 +515,7 @@
 </section>
 <div class="toast" id="toast" role="status"></div>
 <div class="onizleme" id="onizleme" role="tooltip" hidden></div>
+<div class="buyutec" id="buyutec" role="dialog" aria-label="Soru görseli" hidden><button type="button" aria-label="Kapat">×</button><img alt="Soru görseli"></div>
 
 <script src="veri.js"></script>
 <script>
@@ -514,6 +540,10 @@ const IKON = {
   ev: '<path d="M3 11l9-8 9 8M5 9.5V21h5v-6h4v6h5V9.5"/>',
   kitap: '<path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20"/>',
   ayar: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  paylas: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
+  arti: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/>',
+  menu: '<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>',
+  telefon: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
   raptiye: '<path d="M12 16v6M8.5 3h7l-1 6.5 3.5 3V15h-12v-2.5l3.5-3z"/>',
   kep: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
   soru: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
@@ -786,6 +816,13 @@ function cizAna() {
         <small>${esc(kurulAdi(DERSLER[son.ders]))} · ${son.i + 1}/${son.liste.length}. soru</small>
         <span class="cubuk ince"><span class="d" style="width:${(100 * son.i / son.liste.length).toFixed(1)}%"></span></span></span>
       ${ikon("sag")}</button>` : ""}
+    ${yuklenebilir() && !oku("csh-yukle-gizle", false) ? `
+    <div class="kutu yukle-kart">
+      <img src="logo-96.png" alt="" aria-hidden="true">
+      <div class="metin"><b>Uygulama olarak ekle</b><small>Ana ekranından tek dokunuşla, internetsiz aç.</small></div>
+      <button class="dugme kucuk" id="yukle">Ekle</button>
+      <button class="gizle" id="yukle-gizle" aria-label="Bu kartı gizle">×</button>
+    </div>` : ""}
     <button class="kutu liste-ogesi tum-kurullar" id="tum-kurullar"><span class="bolum-ikon">${ikon("kep")}</span>
       <span class="metin"><b>Tüm kurullar ve dersler</b>
         <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length} soru</span></span>${ikon("sag")}</button>`;
@@ -797,7 +834,46 @@ function cizAna() {
     git({ ekran: "soru" });
   };
   $("#tum-kurullar").onclick = () => git({ ekran: "dersler" });
+  if ($("#yukle")) {
+    $("#yukle").onclick = uygulamaEkle;
+    $("#yukle-gizle").onclick = () => { yaz("csh-yukle-gizle", true); ciz(); toast("Gerekirse Ayarlar'dan ekleyebilirsin"); };
+  }
   $("#ana-ara").oninput = e => git({ ekran: "arama", q: e.target.value });
+}
+
+// ---------- uygulama olarak ekle (PWA kurulumu) ----------
+// Chrome/Edge (Android ve bilgisayar) kurulum isteği gönderir: yakalanır, "Ekle" düğmesi açar. iPhone/iPad'de böyle
+// bir istek yoktur; Paylaş → "Ana Ekrana Ekle" adımları gösterilir. Ana ekrandan açılmışken hiçbir şey görünmez.
+let yuklemeIstegi = null;
+const uygulamadaMi = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const iosMu = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const yuklenebilir = () => !uygulamadaMi() && !!(yuklemeIstegi || iosMu() || /android/i.test(navigator.userAgent));
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); yuklemeIstegi = e; if (["ana"].includes(durum.ekran)) ciz(); });
+addEventListener("appinstalled", () => { yuklemeIstegi = null; toast("Uygulama ana ekrana eklendi"); if (durum.ekran === "ana") ciz(); });
+async function uygulamaEkle() {
+  if (yuklemeIstegi) {  // Chrome'un kendi "Yükle" penceresi
+    const istek = yuklemeIstegi;
+    istek.prompt();
+    if ((await istek.userChoice).outcome === "accepted") yuklemeIstegi = null;
+    return ciz();
+  }
+  const ios = iosMu();
+  const adimlar = ios ? [
+    ["paylas", "<b>Paylaş</b> düğmesine dokun: Safari'de alttaki çubukta, Chrome'da adres çubuğunun sağında."],
+    ["arti", "Açılan listeyi kaydırıp <b>Ana Ekrana Ekle</b>'yi seç."],
+    ["tik", "Sağ üstte <b>Ekle</b>'ye dokun. Simge ana ekranında belirir."],
+  ] : [
+    ["menu", "Tarayıcının sağ üstündeki <b>⋮</b> menüsünü aç."],
+    ["arti", "<b>Ana ekrana ekle</b> ya da <b>Uygulamayı yükle</b>'yi seç."],
+    ["tik", "<b>Ekle</b> ya da <b>Yükle</b> ile onayla."],
+  ];
+  pencereAc(`Ana ekrana ekle<small>${ios ? "iPhone / iPad" : "Android"} · uygulama gibi, internetsiz de açılır</small>`, () => {
+    $("#pIcerik").innerHTML = `<ol class="adimlar">${adimlar.map(([ik, m], i) =>
+      `<li><span class="adim-no">${i + 1}</span><span class="bolum-ikon">${ikon(ik)}</span><span>${m}</span></li>`).join("")}</ol>
+      <p class="ayar-not">Eklendikten sonra uygulamayı ana ekrandaki logodan aç; cevapların ve ayarların bu cihazda kalır.</p>
+      <button class="dugme" id="adim-tamam">Anladım</button>`;
+    $("#adim-tamam").onclick = pencereKapat;
+  });
 }
 
 // ---------- çalıştığım kurul ----------
@@ -1002,6 +1078,14 @@ function benzerAc(s, hedefId) {
   oturum.i = Math.max(0, liste.findIndex(x => x.id === hedefId));
   ciz(); window.scrollTo(0, 0);
 }
+// Soru görseli büyüteci (telefonda küçük şekiller için)
+function gorselAc(src) {
+  $("#buyutec img").src = src; $("#buyutec").hidden = false; document.body.classList.add("kilitli");
+}
+function gorselKapat() { $("#buyutec").hidden = true; document.body.classList.remove("kilitli"); }
+$("#buyutec").onclick = e => { if (e.target.tagName !== "IMG") gorselKapat(); };  // görselin kendisi yakınlaştırma için serbest
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#buyutec").hidden) gorselKapat(); });
+
 // Benzer çipine uzun basınca (450 ms) sorunun kökü küçük bir balonda görünür; dokunuşla ya da kaydırmayla kapanır.
 let onizlemeZaman;
 function onizlemeGizle() { clearTimeout(onizlemeZaman); $("#onizleme").hidden = true; }
@@ -1358,8 +1442,8 @@ function cizSoru() {
     ${!kaynak && kapsamVar(oturum) ? `<button class="secici" id="kapsam-ac" aria-label="Konu seç">${ikon("kitap")}
       <span>${esc(oturum.kapsamAd || "Tüm konular")}</span><span class="sayi-rozet">${oturum.temel.length} soru</span>${ikon("asagi")}</button>` : ""}
     <div class="kutu" id="soru-karti">
-      <div class="soru-ust"><span class="kaynak">${konuKisa(s)}</span>
-        <span class="kunye">${tekrar > 1 ? `<span class="tekrar" title="Bu soru ya da neredeyse aynısı ${tekrar} farklı sınavda soruldu">${ikon("yenile")}${tekrar} kez çıktı</span>` : ""}${s.ders.id !== oturum.ders && s.ders.kod ? `${s.ders.kod} · ` : ""}${esc(s.sinav.kunye.replace("/", " "))}</span></div>
+      <div class="soru-ust"><span class="kunye">${s.ders.id !== oturum.ders && s.ders.kod ? `${s.ders.kod} · ` : ""}${esc(s.sinav.kunye.replace("/", " "))}</span>
+        ${tekrar > 1 ? `<span class="tekrar" title="Bu soru ya da neredeyse aynısı ${tekrar} farklı sınavda soruldu">${ikon("yenile")}${tekrar} kez çıktı</span>` : ""}</div>
       <p class="kok">${s.no}) ${vurgula(s.kok, s.vurgu)}</p>
       ${s.onculler ? `<ol class="onculler">${s.onculler.map((o, i) => `<li><span class="rakam">${s.oncul_stil === "rakam" ? i + 1 : ROMA[i]}.</span><span class="oncul">${esc(o)}</span></li>`).join("")}</ol>` : ""}
       ${(s.gorseller || []).map(g => `<img class="soru-gorsel" src="${GORSEL_KOK}${esc(g)}" alt="Soru görseli" loading="lazy">`).join("")}
@@ -1367,7 +1451,7 @@ function cizSoru() {
         `<button class="secenek ${secenekSinifi(h)}${elenen.has(h) ? " elenmis" : ""}" data-harf="${h}"><span class="harf">${harfIcerik(h)}</span><span class="metin">${esc(m)}</span>
           ${cevap ? "" : `<span class="ele" data-ele aria-label="${h} şıkkını ${elenen.has(h) ? "geri getir" : "ele"}" title="${elenen.has(h) ? "Geri getir" : "Şıkkı ele"}">${ikon(elenen.has(h) ? "geriAl" : "ele")}</span>`}</button>`).join("")}
       ${!cevap && !oku("csh-eleme-goruldu", false) ? `<div class="eleme-ipucu">Emin olmadığın şıkları elemek için sağdaki simgeye dokun ya da şıkka uzun bas.</div>` : ""}
-      <div class="soru-bilgi"><span>${sonuc}</span><span class="id">${s.kisa}</span></div>
+      <div class="soru-bilgi">${cevap ? `<span class="konu-alt">${konuKisa(s)}</span>` : "<span></span>"}<span class="id">${sonuc}${s.kisa}</span></div>
       ${benzerHtml}
       ${cevap && !s.dogru ? `<div class="bilgi">Bu sınavın cevap anahtarı henüz eklenmedi. Seçiminiz kaydedildi.</div>` : ""}
       ${cevap && s.dogru_kaynak === "ai" && !s.aciklama ? `<div class="bilgi">Bu sorunun resmî cevap anahtarı yok; cevap yapay zekâ tarafından bulundu ve henüz doğrulanmadı.</div>` : ""}
@@ -1428,6 +1512,7 @@ function cizSoru() {
   };
   $("#geri-al").onclick = () => { delete cevaplar[s.id]; yaz("csh-cevaplar", cevaplar); ciz(); };
   if ($("#kapsam-ac")) $("#kapsam-ac").onclick = kapsamPenceresi;
+  document.querySelectorAll(".soru-gorsel").forEach(img => img.onclick = () => gorselAc(img.src));
   $("#bildir-ac").onclick = () => bildirPenceresi(s);
   onizlemeBagla(s);
   if ($("#benzer-coz")) $("#benzer-coz").onclick = () => benzerAc(s);
@@ -1530,7 +1615,11 @@ function ayarlarPenceresi() {
       ${bolmeli("tema", [["otomatik", "Otomatik"], ["acik", "Açık"], ["koyu", "Koyu"]], tema)}
       <div class="etiket" style="margin-top:16px">Görünüm</div>
       ${bolmeli("gorunum", [["standart", "Standart"], ["ekitap", "E-kitap"]], gorunum)}
-      <p class="ayar-not">E-kitap, zemini kitap sayfası tonuna çevirir; uzun okumada gözü daha az yorar.</p>`;
+      <p class="ayar-not">E-kitap, zemini kitap sayfası tonuna çevirir; uzun okumada gözü daha az yorar.</p>
+      <div class="etiket" style="margin-top:16px">Uygulama</div>
+      ${uygulamadaMi() ? `<div class="bilgi" style="margin-top:0">${ikon("tik")} Uygulama olarak açık.</div>`
+        : `<button class="dugme ikincil yukle-ayar" id="ayar-yukle">${ikon("telefon")} Ana ekrana ekle</button>`}`;
+    if ($("#ayar-yukle")) $("#ayar-yukle").onclick = () => { pencereKapat(); setTimeout(uygulamaEkle, 250); };
     document.querySelectorAll("[data-olcek]").forEach(el => el.onclick = () => {
       olcek = +el.dataset.olcek; yaz("csh-yazi-olcek", olcek); olcekUygula(); cizAyarlar();
     });

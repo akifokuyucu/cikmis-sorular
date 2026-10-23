@@ -1,6 +1,6 @@
 // Çevrimdışı kullanım için basit service worker: önce ağ, ağ yoksa önbellek.
 // Önce ağ denendiği için veri ve arayüz güncellemeleri hemen görünür; önbellek yalnızca çevrimdışıyken kullanılır.
-const ONBELLEK = "soru-havuzu-v2";
+const ONBELLEK = "soru-havuzu-v3";
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(ONBELLEK).then(c => c.addAll(["./index.html", "./veri.js", "./manifest.webmanifest", "./logo-96.png", "./logo-192.png"])));
