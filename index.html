@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Cerrahpaşa Tıp Fakültesi komite sınavlarında çıkmış sorular; açıklamalar, konu dağılımı ve benzer sorular.">
 <meta name="theme-color" content="#7c1714">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Soru Havuzu">
@@ -13,7 +15,7 @@
 <link rel="apple-touch-icon" href="ikon-maskable-512.png">
 <title>Cerrahpaşa Soru Havuzu</title>
 <style>
-  /* Renkler ve şekiller Mezun Arama ile ortak (bkz. TASARIM.md §A). Doğru/yanlış renkleri bordodan ayrık tutulur. */
+  /* Renkler ve şekiller Mezun Arama ile ortak (bkz. belgeler/TASARIM.md §A). Doğru/yanlış renkleri bordodan ayrık tutulur. */
   :root {
     --bordo: #7c1714; --bordo-koyu: #4f0e0c; --bordo-yazi: #7c1714; --bordo-zemin: #f7ecea; --bordo-cizgi: #ead3cf;
     --zemin: #f8f5f4; --kart: #ffffff; --yazi: #1d1a1a; --soluk: #625a58; --cizgi: #e8e0de; --kara: #efe6e3;
@@ -396,6 +398,19 @@
   .gezinme .konum small { display: flex; align-items: center; gap: 4px; font-weight: 500; font-size: 12px; color: var(--soluk); }
   .gezinme .konum small svg { width: 13px; height: 13px; }
 
+  /* Soru ekranında kenar dokunma şeritleri: telefonda kenardan 28 px (şıklar 32 px'te başlar), geniş ekranda kart dışı da */
+  .kenar { position: fixed; z-index: 12; top: calc(64px + env(safe-area-inset-top)); bottom: calc(68px + var(--alt-bosluk));
+           width: calc(max(0px, (100vw - 560px) / 2) + 28px); display: flex; align-items: center; cursor: pointer;
+           touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+  .kenar.sol { left: 0; justify-content: flex-start; }
+  .kenar.sag { right: 0; justify-content: flex-end; }
+  .kenar::after { content: "‹"; display: grid; place-items: center; width: 28px; height: 64px; font-size: 30px; line-height: 1;
+                  color: #fff; background: var(--bordo); opacity: 0; border-radius: 0 32px 32px 0; }
+  .kenar.sag::after { content: "›"; border-radius: 32px 0 0 32px; }
+  .kenar.parla::after { animation: kenar-parla .5s ease-out; }
+  @keyframes kenar-parla { from { opacity: .85; } to { opacity: 0; } }
+  @media (hover: hover) { .kenar:hover::after { opacity: .3; } }
+
   /* Alt pencere ve bildirim (Mezun Arama'daki gibi) */
   .perde { position: fixed; inset: 0; z-index: 30; background: rgba(15, 8, 8, .45); opacity: 0; transition: opacity .2s; }
   .perde.acik { opacity: 1; }
@@ -452,6 +467,11 @@
   .hap svg:last-child:not(:first-child) { width: 14px; height: 14px; margin-right: -3px; }
   .hap[aria-pressed="true"] { border-color: var(--bordo); background: var(--bordo-zemin); color: var(--bordo-yazi); }
   .hap[aria-pressed="true"] svg { color: var(--bordo-yazi); }
+  /* Dar telefonlarda üç hap yan yana sığsın; etiket kesilmesin, açılır ok simgesi düşer */
+  @media (max-width: 400px) {
+    .hap { flex-shrink: 0; padding: 0 10px; gap: 5px; font-size: 13px; }
+    .hap svg:last-child:not(:first-child) { display: none; }
+  }
   .pencere .bilgi { margin: 10px 0 4px; }
   .dagilim-grup { border-bottom: 1px solid var(--cizgi); padding: 10px 0 6px; }
   .dagilim-baslik { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
@@ -506,6 +526,8 @@
 
 <nav class="sekmeler" id="sekmeler" role="tablist"></nav>
 <nav class="gezinme" id="gezinme" hidden></nav>
+<div class="kenar sol" id="kenar-sol" aria-hidden="true" hidden></div>
+<div class="kenar sag" id="kenar-sag" aria-hidden="true" hidden></div>
 
 <div class="perde" id="perde" hidden></div>
 <section class="pencere" id="pencere" role="dialog" aria-modal="true" aria-labelledby="pBaslik" hidden>
@@ -517,7 +539,7 @@
 <div class="onizleme" id="onizleme" role="tooltip" hidden></div>
 <div class="buyutec" id="buyutec" role="dialog" aria-label="Soru görseli" hidden><button type="button" aria-label="Kapat">×</button><img alt="Soru görseli"></div>
 
-<script src="veri.js"></script>
+<script src="veri.860d7be709.js"></script>
 <script>
 const SINAVLAR = window.SORU_VERISI || [];
 // Soru görsellerinin kökü: geliştirmede proje kökü ("../veri/gorsel/…"); yayın paketinde veri.js bunu "" yapar (yayin.py)
@@ -761,7 +783,7 @@ function ciz() {
     $("#kurulumAc").title = secili ? "Çalıştığın kurul; uygulama burada açılır" : "Çalıştığım kurul yap";
   }
   $("#sekmeler").hidden = soruEkrani;
-  $("#gezinme").hidden = !soruEkrani;
+  $("#gezinme").hidden = $("#kenar-sol").hidden = $("#kenar-sag").hidden = !soruEkrani;
   const yanlisSayisi = Object.values(SORULAR).filter(yanlisMi).length;
   $("#sekmeler").innerHTML = SEKMELER.map(([e, ad, ik]) =>
     `<button type="button" role="tab" data-sekme="${e}" aria-selected="${sekmeOf(durum.ekran) === e}">${ikon(ik)}${ad}
@@ -803,7 +825,7 @@ function cizAna() {
     <div class="kahraman"><p>Hoş geldin 👋</p><h1>Cerrahpaşa sınavları, tek yerde</h1>
       <div class="arama">${ikon("ara")}<input id="ana-ara" type="search" placeholder="Soru, ders ya da konu ara" autocomplete="off" aria-label="Ara"></div></div>
     <div class="sayilar">
-      <div class="sayi">${ikon("soru")}<b>${tum.length}</b><span>soru</span></div>
+      <div class="sayi">${ikon("soru")}<b>${tum.length.toLocaleString("tr-TR")}</b><span>soru</span></div>
       <div class="sayi">${ikon("kitap")}<b>${Object.keys(DERSLER).length}</b><span>ders</span></div>
       <div class="sayi">${ikon("takvim")}<b>${SINAVLAR.length}</b><span>sınav</span></div>
       <div class="sayi">${ikon("tik")}<b>${cozulen}</b><span>çözdüğün</span></div>
@@ -825,7 +847,7 @@ function cizAna() {
     </div>` : ""}
     <button class="kutu liste-ogesi tum-kurullar" id="tum-kurullar"><span class="bolum-ikon">${ikon("kep")}</span>
       <span class="metin"><b>Tüm kurullar ve dersler</b>
-        <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length} soru</span></span>${ikon("sag")}</button>`;
+        <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length.toLocaleString("tr-TR")} soru</span></span>${ikon("sag")}</button>`;
 
   kurulumBagla();
   if (son) $("#devam").onclick = () => {
@@ -1544,6 +1566,19 @@ function cizSoru() {
     git({ ekran: "ozet", kaynakSekme: sekmeOf(oturum.donus.ekran) });
   };
 
+  // Ekranın sol/sağ kenarına dokunmak önceki/sonraki soru. Şeritler şıklara değmez; son soruda oturumu bitirmez.
+  const kenar = (el, n) => el.onclick = () => {
+    if (oturum.i + n < 0 || oturum.i + n > sonIndeks)
+      return toast(n > 0 ? "Son soru · bitirmek için alttaki düğmeye dokun" : "İlk soru");
+    el.classList.remove("parla"); void el.offsetWidth; el.classList.add("parla");  // kenarda kısa ok
+    adim(n);
+  };
+  kenar($("#kenar-sol"), -1); kenar($("#kenar-sag"), 1);
+  if (!oku("csh-kenar-ipucu", false)) {
+    yaz("csh-kenar-ipucu", true);
+    setTimeout(() => toast("İpucu: ekranın sağ kenarına dokun → sonraki soru, sol kenarına → önceki"), 600);
+  }
+
   // Yatay kaydırma ile soru değiştirme
   let x0 = null;
   const kart = $("#soru-karti");
@@ -1667,8 +1702,10 @@ function cizOzet() {
 }
 
 ciz();
-// PWA: telefona "uygulama gibi" kurulabilsin, çevrimdışı da açılsın (bkz. sw.js)
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+// PWA: telefona "uygulama gibi" kurulabilsin, çevrimdışı da açılsın (bkz. sw.js). Geliştirmede (yerel sunucu)
+// kaydedilmez; böylece önbellek, veri.js ve arayüzdeki değişiklikleri gizlemez.
+if ("serviceWorker" in navigator && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))
+  navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
 </html>
