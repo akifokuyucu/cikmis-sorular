@@ -4,8 +4,8 @@
 // - veri.<özet>.js: adı içeriğinin özeti olduğu için değişmez; önbellekte varsa ağa hiç gidilmez.
 // - Görseller ve ikonlar: önbellekten hemen verilir, arka planda yenilenir. Ayrı önbellekte durur,
 //   böylece her yeni sürümde yeniden indirilmez.
-const SURUM = "f67a0e18ed";
-const ON_YUKLE = ["./", "./index.html", "./veri.83b47b24cb.js", "./manifest.webmanifest", "./logo-96.png", "./logo-192.png"];
+const SURUM = "9beeb48c50";
+const ON_YUKLE = ["./", "./index.html", "./veri.1b55091459.js", "./manifest.webmanifest", "./logo-96.png", "./logo-192.png"];
 const KABUK = "soru-havuzu-kabuk-" + SURUM;
 const DOSYA = "soru-havuzu-dosya";
 
