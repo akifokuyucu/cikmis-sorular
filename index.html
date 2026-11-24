@@ -539,7 +539,7 @@
 <div class="onizleme" id="onizleme" role="tooltip" hidden></div>
 <div class="buyutec" id="buyutec" role="dialog" aria-label="Soru görseli" hidden><button type="button" aria-label="Kapat">×</button><img alt="Soru görseli"></div>
 
-<script src="veri.bdf0a223df.js"></script>
+<script src="veri.57aa5f3a53.js"></script>
 <script>
 // "Aday M" (sınıf 7) şifreyle açılır; kilitliyken bu sınıfın verisi hiçbir ekranda, sayımda ya da aramada yer almaz.
 const ADAY = 7, ADAY_SIFRE = "1453";
@@ -665,9 +665,11 @@ for (const [kurul, k] of Object.entries(MUFREDAT)) {
   BASLIKLAR[kurul] = {};
   k.basliklar.forEach((b, n) => BASLIKLAR[kurul][b.id] = { ...b, grupAd: k.gruplar[b.grup], kurul, ref: b.kurul, n });
 }
+// Müfredat anahtarı: komitelerde kurul kodu; kodu olmayan dersler (Aday M) kendi kimliğiyle ağaç taşıyabilir.
+const mk = d => d.kod || d.id;
 const baslikOf = s => !s.etiket ? null : s.etiket.konu === "belirsiz"
-  ? { id: "belirsiz", ad: "Metni eksik sorular", grup: "belirsiz", grupAd: "Belirsiz", kurul: s.ders.kod, n: 1e6 }
-  : BASLIKLAR[s.ders.kod]?.[s.etiket.konu];
+  ? { id: "belirsiz", ad: "Metni eksik sorular", grup: "belirsiz", grupAd: "Belirsiz", kurul: mk(s.ders), n: 1e6 }
+  : BASLIKLAR[mk(s.ders)]?.[s.etiket.konu];
 const baslikAdi = b => esc(b.ad) + (b.ref ? ` <span class="ref">${b.ref}</span>` : "");
 const KONUSUZ = "Konu atanmamış";
 const konuAdi = s => baslikOf(s)?.grupAd || s.konu || KONUSUZ;
@@ -1039,7 +1041,7 @@ function sonuclariCiz() {
   });
   document.querySelectorAll("[data-ara-baslik]").forEach(el => el.onclick = () => {
     const b = basliklar[+el.dataset.araBaslik];
-    const liste = Object.values(SORULAR).filter(s => s.ders.kod === b.kurul && baslikOf(s)?.id === b.id).sort(yeniOnce);
+    const liste = Object.values(SORULAR).filter(s => mk(s.ders) === b.kurul && baslikOf(s)?.id === b.id).sort(yeniOnce);
     if (liste.length) oturumBaslat(liste, liste[0].ders.id, durum);
   });
   document.querySelectorAll("[data-sonuc]").forEach(el => el.onclick = () =>
@@ -1176,7 +1178,7 @@ function benzerKapat() {
 
 // ---------- konu seçici (TUSBuddy'deki soru ekranı ünite seçicisi) ----------
 // Oturumun çözülen kümesini bir disipline ya da ders başlığına daraltır; "Tüm konular" geri getirir.
-const kapsamVar = o => MUFREDAT[DERSLER[o.ders]?.kod] && (o.tumTemel || o.temel).some(baslikOf);
+const kapsamVar = o => MUFREDAT[mk(DERSLER[o.ders] || {})] && (o.tumTemel || o.temel).some(baslikOf);
 function kapsamPenceresi() {
   const o = oturum;
   const tum = o.tumTemel ??= o.temel;
@@ -1337,11 +1339,11 @@ function filtrePenceresi(d) {
 // Etiketli kurulda disiplin kartları ve altında ders başlıkları (TUSBuddy ünite kartları); sayılar seçili sınav ve
 // filtreye göre. Ders başlıkları müfredat sırasıyla; soru almamış başlıklar soluk görünür.
 function konuBolumu(d, liste) {
-  const k = MUFREDAT[d.kod];
+  const k = MUFREDAT[mk(d)];
   if (!k) return "";
   const say = {};
   for (const s of liste) { const b = baslikOf(s); if (b) (say[b.id] ??= []).push(s); }
-  const tum = Object.values(BASLIKLAR[d.kod]);
+  const tum = Object.values(BASLIKLAR[mk(d)]);
   const gruplar = [...new Set(tum.map(b => b.grup))].map(g => [g, k.gruplar[g], tum.filter(b => b.grup === g), k.agirlik[g]]);
   gruplar.push(["belirsiz", "Belirsiz", [{ id: "belirsiz", ad: "Metni eksik sorular" }]]);
   const kartlar = gruplar.map(([g, ad, basliklar, agirlik]) => {
@@ -1359,7 +1361,7 @@ function konuBolumu(d, liste) {
             <span>${c}/${sorular.length} çözüldü</span></div>
           <div class="cubuk"><span class="d" style="width:${yuzde(sorular.filter(dogruMu).length)}%"></span><span class="y" style="width:${yuzde(sorular.filter(yanlisMi).length)}%"></span></div>
         </button>
-        <button class="disiplin-ac" data-ac="${g}" aria-expanded="${acik}" aria-label="Ders başlıklarını ${acik ? "gizle" : "göster"}">${ikon("asagi")}</button>
+        ${basliklar.length === 1 && basliklar[0].ad === ad ? "" : `<button class="disiplin-ac" data-ac="${g}" aria-expanded="${acik}" aria-label="Ders başlıklarını ${acik ? "gizle" : "göster"}">${ikon("asagi")}</button>`}
       </div>
       ${acik ? basliklar.map(b => {
         const l = say[b.id] || [], n = l.length;
@@ -1379,7 +1381,7 @@ function konuBolumu(d, liste) {
 // Çıkmış Soru Dağılımı (TUSBuddy şablonu): seçili sınavlardaki soruların disiplin › ders başlığı sayıları ya da sınav
 // başına ortalaması; disiplin satırında çıkmış soru payı ile ders programındaki ağırlık yan yana.
 function dagilimPenceresi(d) {
-  const k = MUFREDAT[d.kod];
+  const k = MUFREDAT[mk(d)];
   const sinavlar = d.sinavlar.filter(x => secim.turler.has(x.sinav.tur) && secim.sinavlar.has(x.sinav.id) && x.sorular.length);
   const gruplar = {};
   for (const s of sinavlar.flatMap(x => x.sorular)) {
