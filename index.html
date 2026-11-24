@@ -539,9 +539,15 @@
 <div class="onizleme" id="onizleme" role="tooltip" hidden></div>
 <div class="buyutec" id="buyutec" role="dialog" aria-label="Soru görseli" hidden><button type="button" aria-label="Kapat">×</button><img alt="Soru görseli"></div>
 
-<script src="veri.eac1313458.js"></script>
+<script src="veri.4afab11d57.js"></script>
 <script>
-const SINAVLAR = window.SORU_VERISI || [];
+// "Aday M" (sınıf 7) şifreyle açılır; kilitliyken bu sınıfın verisi hiçbir ekranda, sayımda ya da aramada yer almaz.
+const ADAY = 7, ADAY_SIFRE = "1453";
+let adayAcik = false;
+try { adayAcik = localStorage.getItem("csh-aday-acik") === "1"; } catch {}
+const SINAVLAR = (window.SORU_VERISI || []).filter(k => k.ders.sinif !== ADAY || adayAcik);
+const SINIFLAR = adayAcik ? [1, 2, 3, 4, 5, 6, ADAY] : [1, 2, 3, 4, 5, 6];
+const sinifAdi = n => n === ADAY ? "Aday M" : `${n}. Sınıf`;
 // Soru görsellerinin kökü: geliştirmede proje kökü ("../veri/gorsel/…"); yayın paketinde veri.js bunu "" yapar (yayin.py)
 const GORSEL_KOK = window.GORSEL_KOK ?? "../";
 const TURLER = { normal: "Normal / Vize", final: "Final", butunleme: "Bütünleme", mazeret: "Mazeret" };
@@ -567,6 +573,7 @@ const IKON = {
   menu: '<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>',
   telefon: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
   raptiye: '<path d="M12 16v6M8.5 3h7l-1 6.5 3.5 3V15h-12v-2.5l3.5-3z"/>',
+  kilit: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   kep: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5M22 9v6"/>',
   soru: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
   takvim: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
@@ -711,7 +718,7 @@ const katla = t => String(t).toLocaleLowerCase("tr").normalize("NFD").replace(/[
 const aiAciklama = s => s.dogru_kaynak === "ai" || s.aciklama?.kaynak === "ai";
 const ROMA = ["I", "II", "III", "IV", "V", "VI"];
 const komiteSinavi = k => /^\d{4}-\d{2}\//.test(k.kunye);  // künye "2025-26/Vize" biçiminde
-const sinavAdi = k => komiteSinavi(k) ? "Komite sınavı" : k.tur === "normal" ? "Staj sınavı" : TURLER[k.tur];
+const sinavAdi = k => komiteSinavi(k) ? "Komite sınavı" : k.kunye.endsWith("Soru Havuzu") ? "Soru havuzu" : k.tur === "normal" ? "Staj sınavı" : TURLER[k.tur];
 // yıl başlığı: staj sınavında takvim yılı ("2026"), komitede eğitim yılı ("2025-26")
 const sinavYili = k => komiteSinavi(k) ? k.kunye.split("/")[0] : k.tarih.slice(0, 4);
 
@@ -797,7 +804,7 @@ function dersKarti(d) {
   const sorular = dersSorulari(d);
   const cozulen = sorular.filter(s => cevaplar[s.id]).length;
   return `<div class="kutu liste-ogesi" data-ders="${d.id}">
-    <div><b>${esc(d.ad)}</b><div class="alt">${d.sinif}. Sınıf · ${d.sinavlar.length} sınav · ${cozulen}/${sorular.length} çözüldü</div></div>
+    <div><b>${esc(d.ad)}</b><div class="alt">${sinifAdi(d.sinif)} · ${d.sinavlar.length} sınav · ${cozulen}/${sorular.length} çözüldü</div></div>
     <span class="sayi-rozet">${sorular.length} soru</span></div>`;
 }
 function dersKartlariniBagla(donus) {
@@ -819,7 +826,7 @@ function cizAna() {
   const tum = Object.values(SORULAR);
   const cozulen = tum.filter(s => cevaplar[s.id]).length;
   const son = sonOturum();
-  const dolu = [1, 2, 3, 4, 5, 6].filter(n => Object.values(DERSLER).some(d => d.sinif === n));
+  const dolu = SINIFLAR.filter(n => Object.values(DERSLER).some(d => d.sinif === n));
 
   $("#icerik").innerHTML = `
     <div class="kahraman"><p>Hoş geldin 👋</p><h1>Cerrahpaşa sınavları, tek yerde</h1>
@@ -847,7 +854,10 @@ function cizAna() {
     </div>` : ""}
     <button class="kutu liste-ogesi tum-kurullar" id="tum-kurullar"><span class="bolum-ikon">${ikon("kep")}</span>
       <span class="metin"><b>Tüm kurullar ve dersler</b>
-        <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length.toLocaleString("tr-TR")} soru</span></span>${ikon("sag")}</button>`;
+        <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length.toLocaleString("tr-TR")} soru</span></span>${ikon("sag")}</button>
+    <button class="kutu liste-ogesi tum-kurullar" id="aday-kart"><span class="bolum-ikon">${ikon("kilit")}</span>
+      <span class="metin"><b>Aday M</b>
+        <span class="alt">${adayAcik ? "Açık · kilitlemek için dokun" : "Şifreyle girilir"}</span></span>${ikon("sag")}</button>`;
 
   kurulumBagla();
   if (son) $("#devam").onclick = () => {
@@ -856,11 +866,36 @@ function cizAna() {
     git({ ekran: "soru" });
   };
   $("#tum-kurullar").onclick = () => git({ ekran: "dersler" });
+  $("#aday-kart").onclick = adayKart;
   if ($("#yukle")) {
     $("#yukle").onclick = uygulamaEkle;
     $("#yukle-gizle").onclick = () => { yaz("csh-yukle-gizle", true); ciz(); toast("Gerekirse Ayarlar'dan ekleyebilirsin"); };
   }
   $("#ana-ara").oninput = e => git({ ekran: "arama", q: e.target.value });
+}
+
+// ---------- Aday M kilidi ----------
+// Not: şifre istemci tarafındadır (veri dosyası herkese açıktır); gizlilik değil, yalnızca görünürlük kapısıdır.
+function adayKart() {
+  if (adayAcik) {
+    try { localStorage.removeItem("csh-aday-acik"); } catch {}
+    return location.reload();
+  }
+  pencereAc("Aday M<small>Şifre gerekli</small>", () => {
+    $("#pIcerik").innerHTML = `
+      <input id="aday-sifre" type="password" inputmode="numeric" autocomplete="off" placeholder="Şifre" aria-label="Şifre"
+        style="width:100%;height:48px;padding:0 14px;border:1px solid var(--cizgi);border-radius:12px;font-size:17px;background:var(--kart,#fff);color:inherit;margin-bottom:10px">
+      <p class="ayar-not" id="aday-hata" style="color:var(--bordo-yazi)" hidden>Şifre yanlış.</p>
+      <button class="dugme" id="aday-gir">Gir</button>`;
+    const gir = () => {
+      if ($("#aday-sifre").value.trim() !== ADAY_SIFRE) { $("#aday-hata").hidden = false; return; }
+      try { localStorage.setItem("csh-aday-acik", "1"); } catch {}
+      location.reload();
+    };
+    $("#aday-gir").onclick = gir;
+    $("#aday-sifre").onkeydown = e => { if (e.key === "Enter") gir(); };
+    setTimeout(() => $("#aday-sifre")?.focus(), 250);
+  });
 }
 
 // ---------- uygulama olarak ekle (PWA kurulumu) ----------
@@ -903,9 +938,9 @@ function kurulumYap(id) {
   kurulum = id; yaz("csh-kurulum", id);
 }
 function kurulCipleri(seciliId) {  // sınıf satırlarında kurul kodları; sorusu olmayan kurullar gösterilmez
-  return [1, 2, 3, 4, 5, 6].map(n => {
+  return SINIFLAR.map(n => {
     const dersler = Object.values(DERSLER).filter(d => d.sinif === n && dersSorulari(d).length);
-    return dersler.length ? `<div class="yil-satiri"><b>${n}. Sınıf</b><div class="cipler">${dersler.map(d =>
+    return dersler.length ? `<div class="yil-satiri"><b>${sinifAdi(n)}</b><div class="cipler">${dersler.map(d =>
       `<button class="cip" data-kurul-sec="${d.id}" aria-pressed="${d.id === seciliId}" title="${esc(d.ad)}">${esc(kurulAdi(d))}</button>`).join("")}</div></div>` : "";
   }).join("");
 }
@@ -1012,7 +1047,7 @@ function sonuclariCiz() {
 }
 
 function cizSinif() {
-  ust(`${durum.sinif}. Sınıf`, durum.sinif <= 3 ? "Komiteler" : "Dersler / Stajlar");
+  ust(sinifAdi(durum.sinif), durum.sinif <= 3 ? "Komiteler" : durum.sinif === ADAY ? "Dersler" : "Dersler / Stajlar");
   $("#icerik").innerHTML = Object.values(DERSLER).filter(d => d.sinif === durum.sinif).map(dersKarti).join("");
   dersKartlariniBagla(durum);
 }
@@ -1021,9 +1056,9 @@ function cizSinif() {
 function cizDersler() {
   ust("Dersler", "Tüm sınıflar");
   let h = "";
-  for (let n = 1; n <= 6; n++) {
+  for (const n of SINIFLAR) {
     const dersler = Object.values(DERSLER).filter(d => d.sinif === n);
-    if (dersler.length) h += `<h2>${n}. Sınıf</h2>` + dersler.map(dersKarti).join("");
+    if (dersler.length) h += `<h2>${sinifAdi(n)}</h2>` + dersler.map(dersKarti).join("");
   }
   $("#icerik").innerHTML = h || `<div class="bos-durum">Henüz ders eklenmedi.</div>`;
   dersKartlariniBagla(durum);
@@ -1192,7 +1227,7 @@ function cizDers() {
   const tum = dersSorulari(d);
   secim ??= { turler: new Set(Object.keys(TURLER)), sinavlar: new Set(d.sinavlar.map(k => k.sinav.id)), ek: "tumu", karisik: false,
               acik: new Set() };  // acik: açık duran disiplin kartları
-  ust(kurulAdi(d), `${d.sinif}. Sınıf${d.kod ? " · Komite" : ""}`);
+  ust(kurulAdi(d), `${sinifAdi(d.sinif)}${d.kod ? " · Komite" : ""}`);
 
   const dolu = d.sinavlar.filter(k => k.sorular.length);
   const seciliSinav = dolu.filter(k => secim.sinavlar.has(k.sinav.id) && secim.turler.has(k.sinav.tur));
