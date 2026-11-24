@@ -859,7 +859,7 @@ function cizAna() {
         <span class="alt">${dolu.length} sınıf · ${Object.keys(DERSLER).length} ders · ${tum.length.toLocaleString("tr-TR")} soru</span></span>${ikon("sag")}</button>
     <button class="kutu liste-ogesi tum-kurullar" id="aday-kart"><span class="bolum-ikon">${ikon("kilit")}</span>
       <span class="metin"><b>Aday M</b>
-        <span class="alt">${adayAcik ? "Açık · kilitlemek için dokun" : "Şifreyle girilir"}</span></span>${ikon("sag")}</button>`;
+        <span class="alt">${adayAcik ? "Bu cihazda açık" : "Şifreyle girilir"}</span></span>${ikon("sag")}</button>`;
 
   kurulumBagla();
   if (son) $("#devam").onclick = () => {
@@ -879,10 +879,7 @@ function cizAna() {
 // ---------- Aday M kilidi ----------
 // Not: şifre istemci tarafındadır (veri dosyası herkese açıktır); gizlilik değil, yalnızca görünürlük kapısıdır.
 function adayKart() {
-  if (adayAcik) {
-    try { localStorage.removeItem("csh-aday-acik"); } catch {}
-    return location.reload();
-  }
+  if (adayAcik) return git({ ekran: "sinif", sinif: ADAY, donus: { ekran: "ana" } });  // şifre bu cihazda bir kez girilir, bir daha sorulmaz
   pencereAc("Aday M<small>Şifre gerekli</small>", () => {
     $("#pIcerik").innerHTML = `
       <input id="aday-sifre" type="password" inputmode="numeric" autocomplete="off" placeholder="Şifre" aria-label="Şifre"
